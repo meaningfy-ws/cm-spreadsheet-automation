@@ -1,0 +1,22 @@
+{
+  "timeZone": "America/New_York",
+  "dependencies": {
+  },
+  "exceptionLogging": "STACKDRIVER",
+  "runtimeVersion": "V8",
+  "sheets": {
+    "macros": [{
+      "menuName": "Export Rules sheet",
+      "functionName": "ExportRulessheet"
+    }, {
+      "menuName": "generateDefaultMgs",
+      "functionName": "generateDefaultMgs"
+    }, {
+      "menuName": "generateMgsWithFieldsSheet",
+      "functionName": "generateMgsWithFieldsSheet"
+    }, {
+      "menuName": "constrainMgs",
+      "functionName": "constrainMgs"
+    }]
+  }
+}
