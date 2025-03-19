@@ -30,6 +30,9 @@ function exportCm(mappingCfgId, sdkVersions, excludedModules) {
   const metadataSheet = spreadsheet.getSheetByName(METADATA_SHEET_NAME);
   
   resultSpreadsheets = [];
+  let filteringCriteria = {
+    excludedModules: excludedModules
+  };
   
   const mappingTypeName = getMappingTypeByMetadataCfgId(
     spreadsheet.getSheetByName(METADATA_CFG_SETS_SHEET_NAME), mappingCfgId
@@ -43,6 +46,7 @@ function exportCm(mappingCfgId, sdkVersions, excludedModules) {
   // export a new spreadsheet for every selected SDK version
   for (let i = 0; i < sdkVersions.length; i++) {
     const currSdk = sdkVersions[i];
+    filteringCriteria.sdk = currSdk;
     Logger.log(`DEBUG: Processing ${sdkVersions[i]} ...`);
     
     const newSpreadsheetName = constructExportFileName(mappingTypeName, currSdk);
@@ -68,56 +72,82 @@ function exportCm(mappingCfgId, sdkVersions, excludedModules) {
     );
 
     // *********************** process Rules (export) sheet  ******************
-    // copy rules to a new spreadsheet
-    const newRulesAllSheet = copySheetDataAndFormatToExtSpreadsheet(
-      rulesSheet, newSpreadsheet, TARGET_RULES_SHEET_NAME + '-All', true
+    let sourceSheetCfg = {
+      name: RULES_EXPORT_SHEET_NAME,
+      modulesColumnName: MODULES_COL_NAME,
+      lastColName: LAST_EXPORTED_COL_NAME_FOR_RULES
+    };
+    let targetSheetCfg = {
+      name: TARGET_RULES_SHEET_NAME,
+      rightsideColsToKeep: RIGHTSIDE_COL_IDXES_TO_KEEP,
+      deleteAuxColumns: true
+    };
+    exportSheet(
+      rulesSheet, sourceSheetCfg, newSpreadsheet, targetSheetCfg, filteringCriteria
     );
+    // // copy rules to a new spreadsheet
+    // const newRulesAllSheet = copySheetDataAndFormatToExtSpreadsheet(
+    //   rulesSheet, newSpreadsheet, TARGET_RULES_SHEET_NAME + '-All', true
+    // );
 
-    // filter the new sheet
-    newRulesAllSheet.getDataRange().createFilter();
-    //set module filter
-    setFilterOnColumn(newRulesAllSheet, MODULES_COL_NAME, excludedModules);
-    // filter SDK - exclude blanks
-    setFilterOnColumn(newRulesAllSheet, currSdk, [BLANK]);
+    // // filter the new sheet
+    // newRulesAllSheet.getDataRange().createFilter();
+    // //set module filter
+    // setFilterOnColumn(newRulesAllSheet, MODULES_COL_NAME, excludedModules);
+    // // filter SDK - exclude blanks
+    // setFilterOnColumn(newRulesAllSheet, currSdk, [BLANK]);
     
-    // copy filtered range to another existing sheet
-    const targetRulesSheet = newSpreadsheet.getSheetByName(TARGET_RULES_SHEET_NAME);
-    const lastColIdx = getColumnIdxByHeaderName(newRulesAllSheet, LAST_EXPORTED_COL_NAME_FOR_RULES);
-    copyDataRangeBetweenSheets(newRulesAllSheet, targetRulesSheet, true);
+    // // copy filtered range to another existing sheet
+    // const targetRulesSheet = newSpreadsheet.getSheetByName(TARGET_RULES_SHEET_NAME);
+    // const lastColIdx = getColumnIdxByHeaderName(newRulesAllSheet, LAST_EXPORTED_COL_NAME_FOR_RULES);
+    // copyDataRangeBetweenSheets(newRulesAllSheet, targetRulesSheet, true);
     
-    // deletes extra right-side columns except for the special ones required for
-    // conditional formatting. Required columns cannot be moved as it causes
-    // conditional formatting rules to fail. Thus, as a a workaround the
-    // unnecessary columns are removed. The special columns are hidden
-    deleteOrHideAuxiliaryRightSideColumns(targetRulesSheet, lastColIdx, RIGHTSIDE_COL_IDXES_TO_KEEP);
+    // // deletes extra right-side columns except for the special ones required for
+    // // conditional formatting. Required columns cannot be moved as it causes
+    // // conditional formatting rules to fail. Thus, as a a workaround the
+    // // unnecessary columns are removed. The special columns are hidden
+    // deleteOrHideAuxiliaryRightSideColumns(targetRulesSheet, lastColIdx, RIGHTSIDE_COL_IDXES_TO_KEEP);
 
-    if (!DEBUG_MODE) {
-      newSpreadsheet.deleteSheet(newRulesAllSheet);
-    }
+    // if (!DEBUG_MODE) {
+    //   newSpreadsheet.deleteSheet(newRulesAllSheet);
+    // }
 
     // ****************** process Mapping Groups (export) sheet ***************
-    const newMgAllSheet = copySheetDataAndFormatToExtSpreadsheet(
-      mgSheet, newSpreadsheet, TARGET_MG_SHEET_NAME + '-All', true
+    sourceSheetCfg = {
+      name: MG_EXPORT_SHEET_NAME,
+      modulesColumnName: MIN_MODULES_COL_NAME,
+      lastColName: LAST_EXPORTED_COL_NAME_FOR_MG
+    };
+    targetSheetCfg = {
+      name: TARGET_MG_SHEET_NAME,
+      rightsideColsToKeep:  RIGHTSIDE_COL_IDXES_TO_KEEP,
+      deleteAuxColumns: true
+    };
+    exportSheet(
+      mgSheet, sourceSheetCfg, newSpreadsheet, targetSheetCfg, filteringCriteria
     );
+    // const newMgAllSheet = copySheetDataAndFormatToExtSpreadsheet(
+    //   mgSheet, newSpreadsheet, TARGET_MG_SHEET_NAME + '-All', true
+    // );
 
-    // filter the new sheet
-    newMgAllSheet.getDataRange().createFilter();
-    //set module filter
-    setFilterOnColumn(newMgAllSheet, MIN_MODULES_COL_NAME, excludedModules);
-    //set SDK filter
-    setFilterOnSdkColumn(newMgAllSheet, currSdk);
+    // // filter the new sheet
+    // newMgAllSheet.getDataRange().createFilter();
+    // //set module filter
+    // setFilterOnColumn(newMgAllSheet, MIN_MODULES_COL_NAME, excludedModules);
+    // //set SDK filter
+    // setFilterOnSdkColumn(newMgAllSheet, currSdk);
 
-    // copy filtered data to the target sheet
-    const targetMgSheet = newSpreadsheet.getSheetByName(TARGET_MG_SHEET_NAME);
-    const lastMgColIdx = getColumnIdxByHeaderName(newMgAllSheet, LAST_EXPORTED_COL_NAME_FOR_MG);
-    copyDataRangeBetweenSheets(newMgAllSheet, targetMgSheet, true);
+    // // copy filtered data to the target sheet
+    // const targetMgSheet = newSpreadsheet.getSheetByName(TARGET_MG_SHEET_NAME);
+    // const lastMgColIdx = getColumnIdxByHeaderName(newMgAllSheet, LAST_EXPORTED_COL_NAME_FOR_MG);
+    // copyDataRangeBetweenSheets(newMgAllSheet, targetMgSheet, true);
 
-    // delete auxilary columns from the target sheet
-    deleteAuxiliaryRightSideColumns(targetMgSheet, lastMgColIdx);
+    // // delete auxilary columns from the target sheet
+    // deleteOrHideAuxiliaryRightSideColumns(targetMgSheet, lastMgColIdx);
 
-    if (!DEBUG_MODE) {
-      newSpreadsheet.deleteSheet(newMgAllSheet);
-    }
+    // if (!DEBUG_MODE) {
+    //   newSpreadsheet.deleteSheet(newMgAllSheet);
+    // }
   }
 
   rulesSheet.getRange(1, 1).activate();
@@ -140,6 +170,59 @@ function exportCm(mappingCfgId, sdkVersions, excludedModules) {
     "resultFiles": resultSpreadsheets
   };
 };
+
+
+/**
+ * Exports data from the source sheet to a new sheet in the external spreadsheet.
+ * The target sheet contains data filtered by the given filtering criteria.
+ * 
+ * The function creates an auxiliary sheet that is used to apply a filter
+ * and copy filtered data from it. It's needed to avoid doing that operations
+ * on the source sheet. The auxiliary sheet is removed unless `DEBUG_MODE` is
+ * enabled.
+ */
+function exportSheet(
+  sourceSheet, sourceSheetCfg, targetSpreadsheet, targetSheetCfg, filteringCriteria
+) {
+  // copy the source sheet content to an auxiliary sheet
+  let intermSheetName = sourceSheetCfg.name + '-All';
+  const newAuxSheet = copySheetDataAndFormatToExtSpreadsheet(
+    sourceSheet, targetSpreadsheet, intermSheetName, true
+  );
+
+  // filter the new sheet
+  newAuxSheet.getDataRange().createFilter();
+  // filter by modules
+  setFilterOnColumn(
+    newAuxSheet, sourceSheetCfg.modulesColumnName, filteringCriteria.excludedModules
+  );
+  // filter by SDK
+  setFilterOnSdkColumn(newAuxSheet, filteringCriteria.sdk);
+  
+  const targetSheet = targetSpreadsheet.getSheetByName(targetSheetCfg.name);
+  // copy filtered range to another existing sheet
+  const lastColIdx = getColumnIdxByHeaderName(
+    newAuxSheet, sourceSheetCfg.lastColName
+  );
+  
+  // TODO: pass copying function as an argument to this function and
+  // use that instead of the above fixed function.
+  copyDataRangeBetweenSheets(newAuxSheet, targetSheet, true);
+  
+  // Delete extra right-side columns except for the special ones required for
+  // conditional formatting. Required columns cannot be moved as it causes
+  // conditional formatting rules to fail. Thus, as a a workaround the
+  // unnecessary columns are removed. The special columns are hidden.
+  if (targetSheetCfg.deleteAuxColumns) {
+    deleteOrHideAuxiliaryRightSideColumns(
+      targetSheet, lastColIdx, targetSheetCfg.rightsideColsToKeep
+    );
+  }
+
+  if (!DEBUG_MODE) {
+    targetSpreadsheet.deleteSheet(newAuxSheet);
+  }
+}
 
 
 /**

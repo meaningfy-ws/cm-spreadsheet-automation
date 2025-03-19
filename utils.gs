@@ -26,27 +26,41 @@ function getColumnIdxByHeaderName(sheet, colName) {
 }
 
 /**
- * Copies all data from a sheet to another sheet in the same spreadsheet.
+ * Copies data from a sheet to another sheet (in the same spreadsheet) given ranges.
+ * 
+ * Pastes values and format.
+*/
+function copyRangeBetweenSheets(sourceSheet, destSheet, sourceRange, destRange, asText) {
+  assert(
+    Boolean(sourceRange) == Boolean(destRange),
+    "One of the ranges provided, but the other one is missing."
+  );
+  let sourceRange_ = sourceRange ? sourceRange : sourceSheet.getDataRange();
+  let destRange_ = destRange ? destRange : destSheet.getDataRange();
+  
+  if (asText) {
+    setTextFormat(destRange_);
+  }
+  destSheet.getRange('A1').activate();
+  SpreadsheetApp.flush();
+  sourceRange_.copyTo(destRange_, SpreadsheetApp.CopyPasteType.PASTE_FORMAT, false);
+  SpreadsheetApp.flush();
+  sourceRange_.copyTo(destRange_, SpreadsheetApp.CopyPasteType.PASTE_VALUES, false);
+}
+
+/**
+ * Copies all data from a sheet to another sheet (in the same spreadsheet).
  * 
  * Pastes values and format.
 */
 function copyDataRangeBetweenSheets(sourceSheet, destSheet, asText) {
-  const sourceRange = sourceSheet.getDataRange();
-  const destRange = destSheet.getDataRange();
-  if (asText) {
-    setTextFormat(destRange);
-  }
-  destSheet.getRange('A1').activate();
-  SpreadsheetApp.flush();
-  sourceRange.copyTo(destRange, SpreadsheetApp.CopyPasteType.PASTE_FORMAT, false);
-  SpreadsheetApp.flush();
-  sourceRange.copyTo(destRange, SpreadsheetApp.CopyPasteType.PASTE_VALUES, false);
+  copyRangeBetweenSheets(sourceSheet, destSheet, null, null, asText);
 }
 
 /**
  * Copy the source sheet to the external spreadsheet. The function mimics copy &
  * values-and-format-only paste functionallity for two different spreadsheets that
- * is missing in the SDK.
+ * is missing from the SDK.
 */
 function copySheetDataAndFormatToExtSpreadsheet(sourceSheet, extSpreadsheet, newExtSheetName, asText) {
   // 1. copy the sheet to the ext spreadsheet - just for the sake of copying format
@@ -102,7 +116,7 @@ function appendTimestamp(name) {
 *
 * rightSideColsToHideIdxes is optional.
 */
-function deleteOrHideAuxiliaryRightSideColumns(sheet, lastRightColToKeepIdx, rightSideColsToHideIdxes) {
+function deleteOrHideAuxiliaryRightSideColumns(sheet, lastRightColToKeepIdx, rightSideColsToHideIdxes = []) {
   var firstRightColToKeepIdx = sheet.getLastColumn() + 1;
   var colsToKeep = Array.from(rightSideColsToHideIdxes).sort().reverse();
   var colsToKeepCnt = rightSideColsToHideIdxes.length;
@@ -115,10 +129,6 @@ function deleteOrHideAuxiliaryRightSideColumns(sheet, lastRightColToKeepIdx, rig
   if (Array.isArray(rightSideColsToHideIdxes) && rightSideColsToHideIdxes.length > 0) {
     sheet.hideColumns(lastRightColToKeepIdx + 1, colsToKeepCnt);
   }
-}
-
-function deleteAuxiliaryRightSideColumns(sheet,lastRightColToKeepIdx) {
-  deleteOrHideAuxiliaryRightSideColumns(sheet,lastRightColToKeepIdx, []);
 }
 
 function deleteColumnsBetween(sheet, lastLeftColToKeepIdx, firstRightColToKeepIdx) {
