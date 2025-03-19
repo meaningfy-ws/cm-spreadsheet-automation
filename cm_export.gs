@@ -63,7 +63,7 @@ function exportCm(mappingCfgId, sdkVersions, excludedModules) {
     // Update the target metadata sheet with predefined config values determined
     // based on the configuration ID (mapping type).
     const targetMetadataSheet = newSpreadsheet.getSheetByName(
-      EXPORTED_SS.SHEET.METADATA_CFG.NAME
+      EXPORTED_SS.SHEET.METADATA.NAME
     );
     copyRangeDataToExternalSheet(metadataSheet.getDataRange(), targetMetadataSheet);
     setMetadataByCfgId(
@@ -233,7 +233,9 @@ function setMetadataByCfgId(metadataCfgSheet, metadataTargetSheet, mappingCfgId,
 }
 
 function resolveSdkVersion(text, sdkVersion) {
-  return text.replace(SDK_VERSION_PLACEHOLDER, sdkVersion);  
+  return text.replace(
+    MASTER_CM_SS.SHEET.METADATA_CFG.SDK_VERSION_PLACEHOLDER, sdkVersion
+  );  
 }
 
 function getMappingTypeByMetadataCfgId(sheet, mappingCfgId) {
