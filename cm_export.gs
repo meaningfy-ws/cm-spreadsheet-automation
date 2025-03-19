@@ -25,9 +25,9 @@
  */
 function exportCm(mappingCfgId, sdkVersions, excludedModules) {
   const spreadsheet = SpreadsheetApp.getActive();
-  const rulesSheet = spreadsheet.getSheetByName(RULES_EXPORT_SHEET_NAME);
-  const mgSheet = spreadsheet.getSheetByName(MG_EXPORT_SHEET_NAME);
-  const metadataSheet = spreadsheet.getSheetByName(METADATA_SHEET_NAME);
+  const rulesSheet = spreadsheet.getSheetByName(MASTER_CM_SS.SHEET.RULES_EXPORT.NAME);
+  const mgSheet = spreadsheet.getSheetByName(MASTER_CM_SS.SHEET.MG_EXPORT.NAME);
+  const metadataSheet = spreadsheet.getSheetByName(MASTER_CM_SS.SHEET.METADATA.NAME);
   
   resultSpreadsheets = [];
   let filteringCriteria = {
@@ -35,7 +35,7 @@ function exportCm(mappingCfgId, sdkVersions, excludedModules) {
   };
   
   const mappingTypeName = getMappingTypeByMetadataCfgId(
-    spreadsheet.getSheetByName(METADATA_CFG_SETS_SHEET_NAME), mappingCfgId
+    spreadsheet.getSheetByName(MASTER_CM_SS.SHEET.METADATA_CFG.NAME), mappingCfgId
   );
 
   // create folder for the new spreadsheets
@@ -62,10 +62,12 @@ function exportCm(mappingCfgId, sdkVersions, excludedModules) {
     // *********************** process Metadata sheet *************************
     // Update the target metadata sheet with predefined config values determined
     // based on the configuration ID (mapping type).
-    const targetMetadataSheet = newSpreadsheet.getSheetByName(METADATA_SHEET_NAME);
+    const targetMetadataSheet = newSpreadsheet.getSheetByName(
+      EXPORTED_SS.SHEET.METADATA_CFG.NAME
+    );
     copyRangeDataToExternalSheet(metadataSheet.getDataRange(), targetMetadataSheet);
     setMetadataByCfgId(
-      spreadsheet.getSheetByName(METADATA_CFG_SETS_SHEET_NAME),
+      spreadsheet.getSheetByName(MASTER_CM_SS.SHEET.METADATA_CFG.NAME),
       targetMetadataSheet,
       mappingCfgId,
       currSdk
@@ -73,81 +75,33 @@ function exportCm(mappingCfgId, sdkVersions, excludedModules) {
 
     // *********************** process Rules (export) sheet  ******************
     let sourceSheetCfg = {
-      name: RULES_EXPORT_SHEET_NAME,
-      modulesColumnName: MODULES_COL_NAME,
-      lastColName: LAST_EXPORTED_COL_NAME_FOR_RULES
+      name: MASTER_CM_SS.SHEET.RULES_EXPORT.NAME,
+      modulesColumnName: MASTER_CM_SS.SHEET.RULES_EXPORT.COLUMN.MODULES.NAME,
     };
     let targetSheetCfg = {
-      name: TARGET_RULES_SHEET_NAME,
-      rightsideColsToKeep: RIGHTSIDE_COL_IDXES_TO_KEEP,
+      name: EXPORTED_SS.SHEET.RULES.NAME,
+      lastColName: EXPORTED_SS.SHEET.RULES.LAST_EXPORTED_COLUMN.NAME,
+      rightsideColsToKeep: EXPORTED_SS.SHEET.RULES.RIGHTSIDE_COL_IDXES_TO_KEEP,
       deleteAuxColumns: true
     };
     exportSheet(
       rulesSheet, sourceSheetCfg, newSpreadsheet, targetSheetCfg, filteringCriteria
     );
-    // // copy rules to a new spreadsheet
-    // const newRulesAllSheet = copySheetDataAndFormatToExtSpreadsheet(
-    //   rulesSheet, newSpreadsheet, TARGET_RULES_SHEET_NAME + '-All', true
-    // );
-
-    // // filter the new sheet
-    // newRulesAllSheet.getDataRange().createFilter();
-    // //set module filter
-    // setFilterOnColumn(newRulesAllSheet, MODULES_COL_NAME, excludedModules);
-    // // filter SDK - exclude blanks
-    // setFilterOnColumn(newRulesAllSheet, currSdk, [BLANK]);
-    
-    // // copy filtered range to another existing sheet
-    // const targetRulesSheet = newSpreadsheet.getSheetByName(TARGET_RULES_SHEET_NAME);
-    // const lastColIdx = getColumnIdxByHeaderName(newRulesAllSheet, LAST_EXPORTED_COL_NAME_FOR_RULES);
-    // copyDataRangeBetweenSheets(newRulesAllSheet, targetRulesSheet, true);
-    
-    // // deletes extra right-side columns except for the special ones required for
-    // // conditional formatting. Required columns cannot be moved as it causes
-    // // conditional formatting rules to fail. Thus, as a a workaround the
-    // // unnecessary columns are removed. The special columns are hidden
-    // deleteOrHideAuxiliaryRightSideColumns(targetRulesSheet, lastColIdx, RIGHTSIDE_COL_IDXES_TO_KEEP);
-
-    // if (!DEBUG_MODE) {
-    //   newSpreadsheet.deleteSheet(newRulesAllSheet);
-    // }
 
     // ****************** process Mapping Groups (export) sheet ***************
     sourceSheetCfg = {
-      name: MG_EXPORT_SHEET_NAME,
-      modulesColumnName: MIN_MODULES_COL_NAME,
-      lastColName: LAST_EXPORTED_COL_NAME_FOR_MG
+      name: MASTER_CM_SS.SHEET.MG_EXPORT.NAME,
+      modulesColumnName: MASTER_CM_SS.SHEET.MG_EXPORT.COLUMN.MODULES.NAME,
     };
     targetSheetCfg = {
-      name: TARGET_MG_SHEET_NAME,
-      rightsideColsToKeep:  RIGHTSIDE_COL_IDXES_TO_KEEP,
+      name: EXPORTED_SS.SHEET.MG.NAME,
+      lastColName: EXPORTED_SS.SHEET.MG.LAST_EXPORTED_COLUMN.NAME,
+      rightsideColsToKeep: EXPORTED_SS.SHEET.MG.RIGHTSIDE_COL_IDXES_TO_KEEP,
       deleteAuxColumns: true
     };
     exportSheet(
       mgSheet, sourceSheetCfg, newSpreadsheet, targetSheetCfg, filteringCriteria
     );
-    // const newMgAllSheet = copySheetDataAndFormatToExtSpreadsheet(
-    //   mgSheet, newSpreadsheet, TARGET_MG_SHEET_NAME + '-All', true
-    // );
-
-    // // filter the new sheet
-    // newMgAllSheet.getDataRange().createFilter();
-    // //set module filter
-    // setFilterOnColumn(newMgAllSheet, MIN_MODULES_COL_NAME, excludedModules);
-    // //set SDK filter
-    // setFilterOnSdkColumn(newMgAllSheet, currSdk);
-
-    // // copy filtered data to the target sheet
-    // const targetMgSheet = newSpreadsheet.getSheetByName(TARGET_MG_SHEET_NAME);
-    // const lastMgColIdx = getColumnIdxByHeaderName(newMgAllSheet, LAST_EXPORTED_COL_NAME_FOR_MG);
-    // copyDataRangeBetweenSheets(newMgAllSheet, targetMgSheet, true);
-
-    // // delete auxilary columns from the target sheet
-    // deleteOrHideAuxiliaryRightSideColumns(targetMgSheet, lastMgColIdx);
-
-    // if (!DEBUG_MODE) {
-    //   newSpreadsheet.deleteSheet(newMgAllSheet);
-    // }
   }
 
   rulesSheet.getRange(1, 1).activate();
@@ -202,7 +156,7 @@ function exportSheet(
   const targetSheet = targetSpreadsheet.getSheetByName(targetSheetCfg.name);
   // copy filtered range to another existing sheet
   const lastColIdx = getColumnIdxByHeaderName(
-    newAuxSheet, sourceSheetCfg.lastColName
+    newAuxSheet, targetSheetCfg.lastColName
   );
   
   // TODO: pass copying function as an argument to this function and
@@ -253,8 +207,17 @@ function makeSpreadsheetFromTemplate(newSpreadsheetName, destFolder) {
 };
 
 function getMetadataCfgByCfgId(sheet, mappingCfgId) {
-  const cfgRowIdx = findRowByValue(sheet, MAPPING_CFG_COL_IDX, mappingCfgId);
-  return objectMap(METADATA_CELL_2_METADATA_CFG_COL_MAPPING, getCellValue, cfgRowIdx, sheet);
+  const cfgRowIdx = findRowByValue(
+    sheet,
+    MASTER_CM_SS.SHEET.METADATA_CFG.COLUMN.CFG_ID.INDEX,
+    mappingCfgId
+  );
+  return objectMap(
+    MASTER_CM_SS.METADATA_CELL_2_METADATA_CFG_COL_MAPPING,
+    getCellValue,
+    cfgRowIdx,
+    sheet
+  );
 }
 
 function setMetadataValues(sheet, metadata, sdkVersion) {
@@ -274,6 +237,13 @@ function resolveSdkVersion(text, sdkVersion) {
 }
 
 function getMappingTypeByMetadataCfgId(sheet, mappingCfgId) {
-  const cfgRowIdx = findRowByValue(sheet, MAPPING_CFG_COL_IDX, mappingCfgId);
-  return sheet.getRange(cfgRowIdx, MAPPING_TYPE_COL_IDX).getValue();
+  const cfgRowIdx = findRowByValue(
+    sheet,
+    MASTER_CM_SS.SHEET.METADATA_CFG.COLUMN.CFG_ID.INDEX,
+    mappingCfgId
+  );
+  return sheet.getRange(
+    cfgRowIdx,
+    MASTER_CM_SS.SHEET.METADATA_CFG.COLUMN.TYPE.INDEX
+  ).getValue();
 }
