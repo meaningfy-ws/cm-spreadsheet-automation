@@ -35,6 +35,14 @@ const MASTER_CM_SS = {
         }
       }
     },
+    ATTR_RULES_EXPORT: {
+      NAME: "Attribute Rules (export) - test",  // TODO: update value
+      COLUMN: {
+        MODULES: {
+          NAME: "Module"
+        }
+      }
+    },
     MG_EXPORT: {
       NAME: "Mapping Groups (export)", //MG_EXPORT_SHEET_NAME
       COLUMN: {
@@ -86,10 +94,26 @@ const EXPORTED_SS = {
       LAST_EXPORTED_COLUMN: {
         NAME: "Mapping Notes (public)"  //LAST_EXPORTED_COL_NAME_FOR_RULES
       },
-      RIGHTSIDE_COL_IDXES_TO_KEEP: [
-        19, // index of "Is Node?" column
-        16, // index of "Min SDK Version" column
-        17  // index of "Max SDK Version" column
+      RIGHTSIDE_COL_NAMES_TO_KEEP: [
+        "Is Node?",
+        "Min SDK Version",
+        "Max SDK Version"
+      ]
+    },
+    ATTR_RULES: {
+      NAME: "Rules",
+      COLUMN: {
+        MODULES: {
+          NAME: MASTER_CM_SS.SHEET.RULES_EXPORT.COLUMN.MODULES.NAME
+        }
+      },
+      LAST_EXPORTED_COLUMN: {
+        NAME: "Mapping Notes (public)"
+      },
+      RIGHTSIDE_COL_NAMES_TO_KEEP: [
+        "Is Node?",
+        "Min SDK Version",
+        "Max SDK Version"
       ]
     },
     MG: {
@@ -102,7 +126,7 @@ const EXPORTED_SS = {
       LAST_EXPORTED_COLUMN: {
         NAME: "Iterator XPath"  //LAST_EXPORTED_COL_NAME_FOR_MG
       },
-      RIGHTSIDE_COL_IDXES_TO_KEEP: []
+      RIGHTSIDE_COL_NAMES_TO_KEEP: []
     },
     METADATA: {
       NAME: MASTER_CM_SS.SHEET.METADATA.NAME

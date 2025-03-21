@@ -81,12 +81,18 @@ function exportCm(mappingCfgId, sdkVersions, excludedModules) {
     let targetSheetCfg = {
       name: EXPORTED_SS.SHEET.RULES.NAME,
       lastColName: EXPORTED_SS.SHEET.RULES.LAST_EXPORTED_COLUMN.NAME,
-      rightsideColsToKeep: EXPORTED_SS.SHEET.RULES.RIGHTSIDE_COL_IDXES_TO_KEEP,
+      rightsideColsToKeep: EXPORTED_SS.SHEET.RULES.RIGHTSIDE_COL_NAMES_TO_KEEP,
       deleteAuxColumns: true
     };
     exportSheet(
-      rulesSheet, sourceSheetCfg, newSpreadsheet, targetSheetCfg, filteringCriteria
+      rulesSheet,
+      sourceSheetCfg,
+      newSpreadsheet,
+      targetSheetCfg,
+      filteringCriteria,
+      copyFn=copyDataRangeBetweenSheets
     );
+
 
     // ****************** process Mapping Groups (export) sheet ***************
     sourceSheetCfg = {
@@ -96,11 +102,36 @@ function exportCm(mappingCfgId, sdkVersions, excludedModules) {
     targetSheetCfg = {
       name: EXPORTED_SS.SHEET.MG.NAME,
       lastColName: EXPORTED_SS.SHEET.MG.LAST_EXPORTED_COLUMN.NAME,
-      rightsideColsToKeep: EXPORTED_SS.SHEET.MG.RIGHTSIDE_COL_IDXES_TO_KEEP,
+      rightsideColsToKeep: EXPORTED_SS.SHEET.MG.RIGHTSIDE_COL_NAMES_TO_KEEP,
       deleteAuxColumns: true
     };
     exportSheet(
-      mgSheet, sourceSheetCfg, newSpreadsheet, targetSheetCfg, filteringCriteria
+      mgSheet,
+      sourceSheetCfg,
+      newSpreadsheet,
+      targetSheetCfg,
+      filteringCriteria,
+      copyFn=copyDataRangeBetweenSheets
+    );
+
+    // ****************** process Attribute Rules (export) sheet ***************
+    sourceSheetCfg = {
+      name: MASTER_CM_SS.SHEET.ATTR_RULES_EXPORT.NAME,
+      modulesColumnName: MASTER_CM_SS.SHEET.ATTR_RULES_EXPORT.COLUMN.MODULES.NAME,
+    };
+    targetSheetCfg = {
+      name: EXPORTED_SS.SHEET.MG.NAME,
+      lastColName: EXPORTED_SS.SHEET.MG.LAST_EXPORTED_COLUMN.NAME,
+      rightsideColsToKeep: EXPORTED_SS.SHEET.MG.RIGHTSIDE_COL_NAMES_TO_KEEP,
+      deleteAuxColumns: true
+    };
+    exportSheet(
+      mgSheet,
+      sourceSheetCfg,
+      newSpreadsheet,
+      targetSheetCfg,
+      filteringCriteria,
+      copyFn=copyRangeBetweenSheetsAtTheEnd
     );
   }
 
@@ -136,7 +167,12 @@ function exportCm(mappingCfgId, sdkVersions, excludedModules) {
  * enabled.
  */
 function exportSheet(
-  sourceSheet, sourceSheetCfg, targetSpreadsheet, targetSheetCfg, filteringCriteria
+  sourceSheet,
+  sourceSheetCfg,
+  targetSpreadsheet,
+  targetSheetCfg,
+  filteringCriteria,
+  copyFn = copyDataRangeBetweenSheets
 ) {
   // copy the source sheet content to an auxiliary sheet
   let intermSheetName = sourceSheetCfg.name + '-All';
@@ -158,10 +194,15 @@ function exportSheet(
   const lastColIdx = getColumnIdxByHeaderName(
     newAuxSheet, targetSheetCfg.lastColName
   );
+
+  const rightsideColsToKeepIdx = targetSheetCfg.rightsideColsToKeep.map(
+    (name) => getColumnIdxByHeaderName(newAuxSheet, name)
+  );
   
   // TODO: pass copying function as an argument to this function and
   // use that instead of the above fixed function.
-  copyDataRangeBetweenSheets(newAuxSheet, targetSheet, true);
+  copyFn(newAuxSheet, targetSheet, options={asText: true});
+  // copyDataRangeBetweenSheets(newAuxSheet, targetSheet, true);
   
   // Delete extra right-side columns except for the special ones required for
   // conditional formatting. Required columns cannot be moved as it causes
@@ -169,7 +210,7 @@ function exportSheet(
   // unnecessary columns are removed. The special columns are hidden.
   if (targetSheetCfg.deleteAuxColumns) {
     deleteOrHideAuxiliaryRightSideColumns(
-      targetSheet, lastColIdx, targetSheetCfg.rightsideColsToKeep
+      targetSheet, lastColIdx, rightsideColsToKeepIdx
     );
   }
 

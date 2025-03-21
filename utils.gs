@@ -30,11 +30,13 @@ function getColumnIdxByHeaderName(sheet, colName) {
  * 
  * Pastes values and format.
 */
-function copyRangeBetweenSheets(sourceSheet, destSheet, sourceRange, destRange, asText) {
+function copyRangeBetweenSheets(sourceSheet, destSheet, sourceRange, destRange, options) {
   assert(
     Boolean(sourceRange) == Boolean(destRange),
     "One of the ranges provided, but the other one is missing."
   );
+  let asText = options.hasOwnProperty('asText') ? options.asText : false;
+
   let sourceRange_ = sourceRange ? sourceRange : sourceSheet.getDataRange();
   let destRange_ = destRange ? destRange : destSheet.getDataRange();
   
@@ -53,8 +55,32 @@ function copyRangeBetweenSheets(sourceSheet, destSheet, sourceRange, destRange, 
  * 
  * Pastes values and format.
 */
-function copyDataRangeBetweenSheets(sourceSheet, destSheet, asText) {
-  copyRangeBetweenSheets(sourceSheet, destSheet, null, null, asText);
+function copyDataRangeBetweenSheets(sourceSheet, destSheet, options) {
+  copyRangeBetweenSheets(sourceSheet, destSheet, null, null, options);
+}
+
+function copyRangeBetweenSheetsAtTheEnd(sourceSheet, destSheet, options) {
+  // Find last row with data in destination sheet
+  let lastRowDest = destSheet.getLastRow(); 
+  let lastColumnDest = destSheet.getLastColumn();
+
+  // Calculate size of data range from source sheet (excluding header)
+  let lastRowSource = sourceSheet.getLastRow();
+  let lastColumnSource = sourceSheet.getLastColumn();
+  let sourceData = sourceSheet.getRange(2, 1, lastRowSource - 1, lastColumnSource);
+
+  // Add empty rows if needed
+  if (sourceData.getNumRows() > 0) {
+    destSheet.insertRowsAfter(lastRowDest, sourceData.getNumRows());
+  }
+
+  let sourceRange = sourceData;
+  // Capture destination range
+  let destRange = destSheet.getRange(
+    lastRowDest + 1, 1, sourceData.getNumRows(), sourceData.getNumColumns()
+  );
+
+  copyRangeBetweenSheets(sourceSheet, destSheet, sourceRange, destRange, options);
 }
 
 /**
