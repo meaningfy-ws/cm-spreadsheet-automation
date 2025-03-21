@@ -131,3 +131,48 @@ function testRemovePrereqNodeRowsForNode(dataIndex) {
   Logger.log("INFO: test `testRemovePrereqNodeRowsForNode` (rule 3) passed.")
 }
 
+function cmExportManualTest() {
+  let exportCfg = {"mappingCfgId":"10-24_vX.Y (Module 1-4)","excludedModules":[],"includedModules":["1","1.6","2","3","3.6","4","4.6","5","6","7","8","5p","6p","7p"],"sdkVersions":["1.10"]};
+  let res = exportCm(
+    exportCfg["mappingCfgId"],
+    exportCfg["sdkVersions"],
+    exportCfg["excludedModules"]
+  );
+  Logger.log("Exporting finished!");
+  return res;
+}
+
+
+function testGetColumnUniqueValuesByColName() {
+  // given
+  const spreadsheet = SpreadsheetApp.getActive();
+  const rulesSheet = spreadsheet.getSheetByName(MASTER_CM_SS.SHEET.RULES_EXPORT.NAME);
+  const colName = MASTER_CM_SS.SHEET.RULES_EXPORT.COLUMN.MODULES.NAME;
+  const expected = [
+    "1",
+    "1.6",
+    "1.7",
+    "2",
+    "3",
+    "3.6",
+    "4",
+    "4.6",
+    "5",
+    "5p",
+    "6",
+    "6p",
+    "7",
+    "7p",
+    "8",
+    "9",
+  ];
+
+  // when
+  const moduleVals = getColumnUniqueValuesByColName(rulesSheet, colName);
+
+  // then
+  assert(
+    hasArraysSameElements(moduleVals, expected),
+    `expected: ${JSON.stringify(expected)}; got: ${JSON.stringify(moduleVals)}`
+  );
+}

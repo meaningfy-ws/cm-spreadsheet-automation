@@ -4,7 +4,7 @@
 
 // if endabled then intermediate 'Rules-All' and 'Mapping Groups-All' 
 // sheets will be preserved in the generated spreadsheet
-const DEBUG_MODE = false;
+const DEBUG_MODE = true;
 
 
 function onOpen(e) {
@@ -31,7 +31,7 @@ function exportCmDialog() {
 
 function initExportCm(exportCfg) {
   Logger.log("Starting new CM export task ...");
-  // Logger.log(`Read config: ${exportCfg}`);
+  Logger.log(`Read config: ${JSON.stringify(exportCfg)}`);
   var res = exportCm(
     exportCfg["mappingCfgId"],
     exportCfg["sdkVersions"],

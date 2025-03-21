@@ -26,11 +26,14 @@
 function exportCm(mappingCfgId, sdkVersions, excludedModules) {
   const spreadsheet = SpreadsheetApp.getActive();
   const rulesSheet = spreadsheet.getSheetByName(MASTER_CM_SS.SHEET.RULES_EXPORT.NAME);
+  const attrRulesSheet = spreadsheet.getSheetByName(MASTER_CM_SS.SHEET.ATTR_RULES_EXPORT.NAME);
   const mgSheet = spreadsheet.getSheetByName(MASTER_CM_SS.SHEET.MG_EXPORT.NAME);
   const metadataSheet = spreadsheet.getSheetByName(MASTER_CM_SS.SHEET.METADATA.NAME);
   
+  const modules = collectUniqueModuleNumbers(spreadsheet);
   resultSpreadsheets = [];
   let filteringCriteria = {
+    // excludedModules: excludedModules  // FIXME: remove excludedModules
     excludedModules: excludedModules
   };
   
@@ -120,13 +123,13 @@ function exportCm(mappingCfgId, sdkVersions, excludedModules) {
       modulesColumnName: MASTER_CM_SS.SHEET.ATTR_RULES_EXPORT.COLUMN.MODULES.NAME,
     };
     targetSheetCfg = {
-      name: EXPORTED_SS.SHEET.MG.NAME,
-      lastColName: EXPORTED_SS.SHEET.MG.LAST_EXPORTED_COLUMN.NAME,
-      rightsideColsToKeep: EXPORTED_SS.SHEET.MG.RIGHTSIDE_COL_NAMES_TO_KEEP,
+      name: EXPORTED_SS.SHEET.RULES.NAME,
+      lastColName: EXPORTED_SS.SHEET.ATTR_RULES.LAST_EXPORTED_COLUMN.NAME,
+      rightsideColsToKeep: EXPORTED_SS.SHEET.ATTR_RULES.RIGHTSIDE_COL_NAMES_TO_KEEP,
       deleteAuxColumns: true
     };
     exportSheet(
-      mgSheet,
+      attrRulesSheet,
       sourceSheetCfg,
       newSpreadsheet,
       targetSheetCfg,
@@ -196,7 +199,7 @@ function exportSheet(
   );
 
   const rightsideColsToKeepIdx = targetSheetCfg.rightsideColsToKeep.map(
-    (name) => getColumnIdxByHeaderName(newAuxSheet, name)
+    (name) => getColumnIdxByHeaderName(newAuxSheet, name, start=lastColIdx)
   );
   
   // TODO: pass copying function as an argument to this function and
@@ -219,6 +222,35 @@ function exportSheet(
   }
 }
 
+/**
+ * Collects module numbers from data, analyzing the predefined sheets.
+ */
+function collectUniqueModuleNumbers(spreadsheet) {
+  const rulesSheet = spreadsheet.getSheetByName(MASTER_CM_SS.SHEET.RULES_EXPORT.NAME);
+  const attrRulesSheet = spreadsheet.getSheetByName(MASTER_CM_SS.SHEET.ATTR_RULES_EXPORT.NAME);
+  const mgSheet = spreadsheet.getSheetByName(MASTER_CM_SS.SHEET.MG_EXPORT.NAME);
+  
+  const rModules = getColumnUniqueValuesByColName(
+    rulesSheet,
+    MASTER_CM_SS.SHEET.RULES_EXPORT.COLUMN.MODULES.NAME,
+    datatype=String,
+    skipHeader=true
+  );
+  const arModules = getColumnUniqueValuesByColName(
+    attrRulesSheet,
+    MASTER_CM_SS.SHEET.ATTR_RULES_EXPORT.COLUMN.MODULES.NAME,
+    datatype=String,
+    skipHeader=true
+  );
+  const mgModules = getColumnUniqueValuesByColName(
+    mgSheet,
+    MASTER_CM_SS.SHEET.MG_EXPORT.COLUMN.MODULES.NAME,
+    datatype=String,
+    skipHeader=true
+  );
+
+  // TODO: integrate the three arrays
+}
 
 /**
 * Set a filtering of values of the given column.

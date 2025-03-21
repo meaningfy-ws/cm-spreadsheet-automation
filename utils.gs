@@ -9,8 +9,8 @@ function assert(condition, message) {
  * 
  * Uses header value stored in the first row.
 */
-function getColumnIdxByHeaderName(spreadsheet, sheetName, colName) {
-  return getColumnIdxByHeaderName(spreadsheet.getSheetByName(sheetName), colName);  
+function getColumnIdxByHeaderName(spreadsheet, sheetName, colName, start=0) {
+  return getColumnIdxByHeaderName(spreadsheet.getSheetByName(sheetName), colName, start);  
 }
 
 /**
@@ -18,9 +18,9 @@ function getColumnIdxByHeaderName(spreadsheet, sheetName, colName) {
  * 
  * Uses header value stored in the first row.
 */
-function getColumnIdxByHeaderName(sheet, colName) {
+function getColumnIdxByHeaderName(sheet, colName, start=0) {
   const headers = sheet.getRange("A1:1").getValues()[0];
-  const colNum = headers.indexOf(colName) + 1;
+  const colNum = headers.indexOf(colName, fromIndex=start) + 1;
   if (colNum < 0) throw `Cannot find column '${colName}' !`;
   return colNum
 }
@@ -334,4 +334,36 @@ function removeFromArray(obj, arr) {
   if(index !== -1) {
     arr.splice(index, 1);
   }
+}
+
+function getColumnUniqueValuesByColName(sheet, columnName, datatype=String, skipHeader=true) {
+  const columnIdx = getColumnIdxByHeaderName(sheet, columnName);
+  return getColumnUniqueValuesByColIdx(sheet, columnIdx, datatype, skipHeader);
+}
+/**
+ * @datatype A JS primitive type. It is required to avoid surprises where 3 and "3" are
+ *           treated as a different value.
+ */
+function getColumnUniqueValuesByColIdx(sheet, columnIdx, datatype=String, skipHeader=true) {
+  // range is one element smaller if header is excluded
+  var range = sheet.getRange(1 + skipHeader, columnIdx, sheet.getLastRow() - skipHeader);
+  var allValues = range.getValues().flat(); // Get all values in column
+  var uniqueValues = [...new Set(allValues.map(x => datatype(x)))]; // Remove duplicates
+  return uniqueValues;
+}
+
+// source: https://stackoverflow.com/a/19746771
+function areArraysEqual(arr1, arr2) {
+  return arr1.length === arr2.length && arr1.every(function(value, index) { return value === arr2[index]});
+}
+
+/**
+ * Order of elements is not important.
+ * 
+ * source: https://stackoverflow.com/a/44827922
+ */
+function hasArraysSameElements(arr1, arr2) {
+  const s1 = new Set(arr1);
+  const s2 = new Set(arr2);
+  return s1.size === s2.size && [...s1].every(value => s2.has(value));
 }

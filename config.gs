@@ -96,8 +96,8 @@ const EXPORTED_SS = {
       },
       RIGHTSIDE_COL_NAMES_TO_KEEP: [
         "Is Node?",
-        "Min SDK Version",
-        "Max SDK Version"
+        "Min SDK Version",  // 16th column, not 1st!
+        "Max SDK Version"  // 17th column, not 2nd!
       ]
     },
     ATTR_RULES: {
@@ -112,8 +112,8 @@ const EXPORTED_SS = {
       },
       RIGHTSIDE_COL_NAMES_TO_KEEP: [
         "Is Node?",
-        "Min SDK Version",
-        "Max SDK Version"
+        "Min SDK Version",  // 16th column, not 1st!
+        "Max SDK Version"  // 17th column, not 2nd!
       ]
     },
     MG: {
