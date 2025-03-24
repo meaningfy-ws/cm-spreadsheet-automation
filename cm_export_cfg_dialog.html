@@ -69,11 +69,10 @@
           <? } ?>
         </div>
         <div>
-        <div>
           <label>
             <input type="checkbox" class="checkAll" onclick="toggleGroup(this, '.attrMods')"> <i>Check all</i>
-        </label>
-        <br>
+          </label>
+          <br>
           <? for (const m of attrModules) { ?>
             <div>
               <input type="checkbox" id="module_<?= m ?>" name="attrModule" class="attrMods" value="<?= m ?>" checked>
