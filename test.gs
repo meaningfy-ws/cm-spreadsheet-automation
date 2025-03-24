@@ -132,7 +132,13 @@ function testRemovePrereqNodeRowsForNode(dataIndex) {
 }
 
 function cmExportManualTest() {
-  let exportCfg = {"mappingCfgId":"10-24_vX.Y (Module 1-4)","excludedModules":[],"includedModules":["1","1.6","2","3","3.6","4","4.6","5","6","7","8","5p","6p","7p"],"sdkVersions":["1.10"]};
+  let exportCfg = {
+    "mappingCfgId": "10-24_vX.Y (Module 1-4)",
+    // "excludedModules": [],
+    "includedPrimModules": ["1", "1.6", "2", "3", "3.6", "4", "4.6", "5", "6", "7", "8", "5p", "6p", "7p"],
+    "includedAttrModules": ["1a", "2a"],
+    "sdkVersions": ["1.10"]
+  };
   let res = exportCm(
     exportCfg["mappingCfgId"],
     exportCfg["sdkVersions"],

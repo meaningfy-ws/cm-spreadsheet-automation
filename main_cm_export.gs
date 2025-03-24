@@ -32,10 +32,13 @@ function exportCmDialog() {
 function initExportCm(exportCfg) {
   Logger.log("Starting new CM export task ...");
   Logger.log(`Read config: ${JSON.stringify(exportCfg)}`);
+  // exportCfg["includedAttrModules"] = ["1a", "2a"];  // TODO: FIXME get from UI form
   var res = exportCm(
     exportCfg["mappingCfgId"],
     exportCfg["sdkVersions"],
-    exportCfg["excludedModules"]
+    // exportCfg["excludedModules"],
+    exportCfg["includedPrimModules"],
+    exportCfg["includedAttrModules"]
   );
   Logger.log("Exporting finished!");
   return res;

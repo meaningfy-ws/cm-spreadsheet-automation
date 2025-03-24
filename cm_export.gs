@@ -18,23 +18,29 @@
  *
  * @param mappingCfgId a string representing metatadata cfg id
  * @param sdkVersions a list of strings representing SDK version
- * @param excludedModules a list of strings representing modules that will be
- * filtered out
+ * @param includedPrimModules a list of strings representing so-called primary
+ *                            modules that won't be filtered out
+ * @param includedAttrModules a list of strings representing modules for
+ *                            attribute rules that won't be filtered out.
  * @returns An object containing URLs for viewing spreadsheets and downloading
  * zipped archive
  */
-function exportCm(mappingCfgId, sdkVersions, excludedModules) {
+// function exportCm(mappingCfgId, sdkVersions, excludedModules) {
+function exportCm(mappingCfgId, sdkVersions, includedPrimModules, includedAttrModules) {
   const spreadsheet = SpreadsheetApp.getActive();
   const rulesSheet = spreadsheet.getSheetByName(MASTER_CM_SS.SHEET.RULES_EXPORT.NAME);
   const attrRulesSheet = spreadsheet.getSheetByName(MASTER_CM_SS.SHEET.ATTR_RULES_EXPORT.NAME);
   const mgSheet = spreadsheet.getSheetByName(MASTER_CM_SS.SHEET.MG_EXPORT.NAME);
   const metadataSheet = spreadsheet.getSheetByName(MASTER_CM_SS.SHEET.METADATA.NAME);
   
-  const modules = collectUniqueModuleNumbers(spreadsheet);
+  const [primaryModules, attrModules] = collectUniqueModuleNumbers(spreadsheet);
+  const excludedPrimModules = arrayDifference(primaryModules, includedPrimModules);
+  const excludedAttrModules = arrayDifference(attrModules, includedAttrModules);
+  const excludedModules = 
   resultSpreadsheets = [];
   let filteringCriteria = {
     // excludedModules: excludedModules  // FIXME: remove excludedModules
-    excludedModules: excludedModules
+    excludedModules: excludedPrimModules
   };
   
   const mappingTypeName = getMappingTypeByMetadataCfgId(
@@ -128,6 +134,7 @@ function exportCm(mappingCfgId, sdkVersions, excludedModules) {
       rightsideColsToKeep: EXPORTED_SS.SHEET.ATTR_RULES.RIGHTSIDE_COL_NAMES_TO_KEEP,
       deleteAuxColumns: true
     };
+    filteringCriteria[excludedModules] = excludedAttrModules;  // use attr rule modules
     exportSheet(
       attrRulesSheet,
       sourceSheetCfg,
@@ -224,6 +231,9 @@ function exportSheet(
 
 /**
  * Collects module numbers from data, analyzing the predefined sheets.
+ * 
+ * Returns primary modules list and attribute rules list.
+ * Primary modules list consists of modules relevant to rules and MGs.
  */
 function collectUniqueModuleNumbers(spreadsheet) {
   const rulesSheet = spreadsheet.getSheetByName(MASTER_CM_SS.SHEET.RULES_EXPORT.NAME);
@@ -249,7 +259,9 @@ function collectUniqueModuleNumbers(spreadsheet) {
     skipHeader=true
   );
 
-  // TODO: integrate the three arrays
+  const primaryModules = mergeAndSortArrays(rModules, mgModules);
+  const attrModules = arModules;
+  return [primaryModules, attrModules];
 }
 
 /**

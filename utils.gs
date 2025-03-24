@@ -367,3 +367,20 @@ function hasArraysSameElements(arr1, arr2) {
   const s2 = new Set(arr2);
   return s1.size === s2.size && [...s1].every(value => s2.has(value));
 }
+
+function mergeAndSortArrays(arr1, arr2) {
+  // Merge the arrays
+  let mergedArray = [...arr1, ...arr2];
+
+  // Remove duplicates using Set
+  let uniqueArray = [...new Set(mergedArray)];
+
+  // Sort the array
+  uniqueArray.sort((a, b) => a - b);
+
+  return uniqueArray;
+}
+
+function arrayDifference(arr1, arr2) {
+  return arr1.filter(item => !arr2.includes(item));
+}
