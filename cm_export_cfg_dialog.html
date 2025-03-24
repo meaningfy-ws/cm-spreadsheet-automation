@@ -10,17 +10,17 @@
   <div id="input" style="display:block">
     <p>Select metadata configuration (to be used to build Metadata sheet)</p>
     <div>
-      <input type="radio" id="cn" name="cfgId" value="10-24_vX.Y (Module 1-4)" title="CN">
+      <input type="radio" id="cn" name="cfgId" value="10-24_vX.Y (Module 1-4)" title="CN" onclick="updateDefaultModules(this.value)">
       <label for="cfg_cn">10-24_vX.Y (Module 1-4)</label><br>
-      <input type="radio" id="cfg_can" name="cfgId" value="29_vX.Y (Module 6)" title="EF29">
+      <input type="radio" id="cfg_can" name="cfgId" value="29_vX.Y (Module 6)" title="EF29" onclick="updateDefaultModules(this.value)">
       <label for="cfg_can">29_vX.Y (Module 6)</label><br>
-      <input type="radio" id="cfg_cncan" name="cfgId" value="10-24+29_vX.Y (Module 1-6)" title="CN+EF29">
+      <input type="radio" id="cfg_cncan" name="cfgId" value="10-24+29_vX.Y (Module 1-6)" title="CN+EF29" onclick="updateDefaultModules(this.value)">
       <label for="cfg_cncan">10-24+29_vX.Y (Module 1-6)</label><br>
-      <input type="radio" id="cfg_pin" name="cfgId" value="1-9_vX.Y (Module 7)" title="PIN">
+      <input type="radio" id="cfg_pin" name="cfgId" value="1-9_vX.Y (Module 7)" title="PIN" onclick="updateDefaultModules(this.value)">
       <label for="cfg_pin">1-9_vX.Y (Module 7)</label><br>
-      <input type="radio" id="cfg_allnew" name="cfgId" value="1-40+CEI+T01-T02+E1-E6_vX.Y (Module 7+8)" title="All (New)">
+      <input type="radio" id="cfg_allnew" name="cfgId" value="1-40+CEI+T01-T02+E1-E6_vX.Y (Module 7+8)" title="All (New)" onclick="updateDefaultModules(this.value)">
       <label for="cfg_pin">1-40+CEI+T01-T02+E1-E6_vX.Y (Module 7+8)</label><br>
-      <input type="radio" id="cfg_all" name="cfgId" value="1-40+CEI+T01-T02+E1-E6_vX.Y (All Modules)" title="All">
+      <input type="radio" id="cfg_all" name="cfgId" value="1-40+CEI+T01-T02+E1-E6_vX.Y (All Modules)" title="All" onclick="updateDefaultModules(this.value)">
       <label for="cfg_pin">1-40+CEI+T01-T02+E1-E6_vX.Y (All Modules)</label><br>
     </div>
 
@@ -101,6 +101,22 @@
   <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js">
   </script>
   <script>
+    function updateDefaultModules(metadataCfgId) {
+      google.script.run.withSuccessHandler(
+        setModulesCheckboxes
+      ).getDefModulesByMetadataCfgId(metadataCfgId);
+    }
+
+    function setModulesCheckboxes(defModules) {
+      const allModuleCheckboxes = [
+        ...document.getElementsByName("primModule"),
+        ...document.getElementsByName("attrModule")
+      ];
+      for (const chkbx of allModuleCheckboxes) {
+        chkbx.checked = (defModules.includes(chkbx.value));
+      }
+    }
+
     function toggleGroup(source, groupClass) {
         const checkboxes = document.querySelectorAll(groupClass);
         checkboxes.forEach(checkbox => checkbox.checked = source.checked);

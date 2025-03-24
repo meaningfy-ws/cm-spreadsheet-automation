@@ -65,6 +65,9 @@ const MASTER_CM_SS = {
           NAME: "Type",
           INDEX: 3  //MAPPING_TYPE_COL_IDX
         },
+        DEF_MODULES: {
+          NAME: "Default for Included Modules"
+        }
       },
       SDK_VERSION_PLACEHOLDER: "$SDK_Version$" //SDK_VERSION_PLACEHOLDER
     }

@@ -312,6 +312,10 @@ function getMetadataCfgByCfgId(sheet, mappingCfgId) {
   );
 }
 
+function getDefaultModules() {
+  MASTER_CM_SS.SHEET.METADATA_CFG.COLUMN.DEF_MODULES.NAME
+}
+
 function setMetadataValues(sheet, metadata, sdkVersion) {
   for (const cellIdx in metadata) {
     var metadataValue = resolveSdkVersion(metadata[cellIdx], sdkVersion);
@@ -331,13 +335,39 @@ function resolveSdkVersion(text, sdkVersion) {
 }
 
 function getMappingTypeByMetadataCfgId(sheet, mappingCfgId) {
+  // const cfgRowIdx = findRowByValue(
+  //   sheet,
+  //   MASTER_CM_SS.SHEET.METADATA_CFG.COLUMN.CFG_ID.INDEX,
+  //   mappingCfgId
+  // );
+  // return sheet.getRange(
+  //   cfgRowIdx,
+  //   MASTER_CM_SS.SHEET.METADATA_CFG.COLUMN.TYPE.INDEX
+  // ).getValue();
+
+  return getMetadataByMetadataCfgId(
+    mappingCfgId,
+    MASTER_CM_SS.SHEET.METADATA_CFG.COLUMN.TYPE.NAME,
+    sheet
+  )
+}
+
+function getDefModulesByMetadataCfgId(mappingCfgId) {
+  const mods = getMetadataByMetadataCfgId(
+    mappingCfgId,
+    MASTER_CM_SS.SHEET.METADATA_CFG.COLUMN.DEF_MODULES.NAME
+  );
+  // Logger.log(`Default modules for ${mappingCfgId}: ${mods}`);
+  return mods.replace(/\s+/g, '').split(',');
+}
+
+function getMetadataByMetadataCfgId(mappingCfgId, colName, sheet) {
+  let sheet_ = sheet ? sheet : SpreadsheetApp.getActive().getSheetByName(MASTER_CM_SS.SHEET.METADATA_CFG.NAME);
   const cfgRowIdx = findRowByValue(
-    sheet,
+    sheet_,
     MASTER_CM_SS.SHEET.METADATA_CFG.COLUMN.CFG_ID.INDEX,
     mappingCfgId
   );
-  return sheet.getRange(
-    cfgRowIdx,
-    MASTER_CM_SS.SHEET.METADATA_CFG.COLUMN.TYPE.INDEX
-  ).getValue();
+  const colIdx = getColumnIdxByHeaderName(sheet_, colName);
+  return sheet_.getRange(cfgRowIdx, colIdx).getValue();
 }
