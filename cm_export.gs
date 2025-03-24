@@ -36,7 +36,8 @@ function exportCm(mappingCfgId, sdkVersions, includedPrimModules, includedAttrMo
   const [primaryModules, attrModules] = collectUniqueModuleNumbers(spreadsheet);
   const excludedPrimModules = arrayDifference(primaryModules, includedPrimModules);
   const excludedAttrModules = arrayDifference(attrModules, includedAttrModules);
-  const excludedModules = 
+  Logger.log(`excludedPrimModules: ${JSON.stringify(excludedPrimModules)},
+    excludedAttrModules: ${JSON.stringify(excludedAttrModules)}`);  
   resultSpreadsheets = [];
   let filteringCriteria = {
     // excludedModules: excludedModules  // FIXME: remove excludedModules
@@ -134,14 +135,15 @@ function exportCm(mappingCfgId, sdkVersions, includedPrimModules, includedAttrMo
       rightsideColsToKeep: EXPORTED_SS.SHEET.ATTR_RULES.RIGHTSIDE_COL_NAMES_TO_KEEP,
       deleteAuxColumns: true
     };
-    filteringCriteria[excludedModules] = excludedAttrModules;  // use attr rule modules
+    filteringCriteria.excludedModules = excludedAttrModules;  // use attr rule modules
     exportSheet(
       attrRulesSheet,
       sourceSheetCfg,
       newSpreadsheet,
       targetSheetCfg,
       filteringCriteria,
-      copyFn=copyRangeBetweenSheetsAtTheEnd
+      copyFn=copyRangeBetweenSheetsAtTheEnd,
+      options={intermSheetName: "Attr rules-All"}
     );
   }
 
@@ -182,10 +184,14 @@ function exportSheet(
   targetSpreadsheet,
   targetSheetCfg,
   filteringCriteria,
-  copyFn = copyDataRangeBetweenSheets
+  copyFn = copyDataRangeBetweenSheets,
+  options
 ) {
   // copy the source sheet content to an auxiliary sheet
   let intermSheetName = sourceSheetCfg.name + '-All';
+  if (options && options.hasOwnProperty("intermSheetName")) {
+    intermSheetName = options.intermSheetName;
+  }
   const newAuxSheet = copySheetDataAndFormatToExtSpreadsheet(
     sourceSheet, targetSpreadsheet, intermSheetName, true
   );

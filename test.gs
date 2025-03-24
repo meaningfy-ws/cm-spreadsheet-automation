@@ -142,7 +142,8 @@ function cmExportManualTest() {
   let res = exportCm(
     exportCfg["mappingCfgId"],
     exportCfg["sdkVersions"],
-    exportCfg["excludedModules"]
+    exportCfg["includedPrimModules"],
+    exportCfg["includedAttrModules"]
   );
   Logger.log("Exporting finished!");
   return res;

@@ -39,6 +39,8 @@ function copyRangeBetweenSheets(sourceSheet, destSheet, sourceRange, destRange, 
 
   let sourceRange_ = sourceRange ? sourceRange : sourceSheet.getDataRange();
   let destRange_ = destRange ? destRange : destSheet.getDataRange();
+  // Logger.log(`DEBUG: sourceRange_ size: ${sourceRange_.getNumRows()} x ${sourceRange_.getNumColumns()}`);
+  // Logger.log(`DEBUG: destRange_ size: ${destRange_.getNumRows()} x ${destRange_.getNumColumns()}`);
   
   if (asText) {
     setTextFormat(destRange_);
@@ -62,22 +64,15 @@ function copyDataRangeBetweenSheets(sourceSheet, destSheet, options) {
 function copyRangeBetweenSheetsAtTheEnd(sourceSheet, destSheet, options) {
   // Find last row with data in destination sheet
   let lastRowDest = destSheet.getLastRow(); 
-  let lastColumnDest = destSheet.getLastColumn();
 
-  // Calculate size of data range from source sheet (excluding header)
   let lastRowSource = sourceSheet.getLastRow();
   let lastColumnSource = sourceSheet.getLastColumn();
-  let sourceData = sourceSheet.getRange(2, 1, lastRowSource - 1, lastColumnSource);
+  let sourceRange = sourceSheet.getRange(2, 1, lastRowSource - 1, lastColumnSource);
 
-  // Add empty rows if needed
-  if (sourceData.getNumRows() > 0) {
-    destSheet.insertRowsAfter(lastRowDest, sourceData.getNumRows());
-  }
-
-  let sourceRange = sourceData;
   // Capture destination range
   let destRange = destSheet.getRange(
-    lastRowDest + 1, 1, sourceData.getNumRows(), sourceData.getNumColumns()
+    // setting single row as a range, it will be automatically expanded
+    lastRowDest + 1, 1, 1, sourceRange.getNumColumns()
   );
 
   copyRangeBetweenSheets(sourceSheet, destSheet, sourceRange, destRange, options);
