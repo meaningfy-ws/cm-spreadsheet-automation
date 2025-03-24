@@ -4,7 +4,7 @@
 
 // if endabled then intermediate 'Rules-All' and 'Mapping Groups-All' 
 // sheets will be preserved in the generated spreadsheet
-const DEBUG_MODE = true;
+const DEBUG_MODE = false;
 
 
 function onOpen(e) {
@@ -21,7 +21,12 @@ function onOpen(e) {
 function exportCmDialog() {
   const ui = SpreadsheetApp.getUi();
   //Call the HTML file and set the width and height
-  var html = HtmlService.createHtmlOutputFromFile("cm_export_cfg_dialog")
+  var htmlTemplate = HtmlService.createTemplateFromFile("cm_export_cfg_dialog");
+  const [primaryModules, attrModules] = collectUniqueModuleNumbers(SpreadsheetApp.getActive());
+  htmlTemplate.primModules = primaryModules.toSorted();
+  htmlTemplate.attrModules = attrModules.toSorted();
+  
+  var html = htmlTemplate.evaluate()
     .setWidth(500)
     .setHeight(700);
 
@@ -32,11 +37,9 @@ function exportCmDialog() {
 function initExportCm(exportCfg) {
   Logger.log("Starting new CM export task ...");
   Logger.log(`Read config: ${JSON.stringify(exportCfg)}`);
-  // exportCfg["includedAttrModules"] = ["1a", "2a"];  // TODO: FIXME get from UI form
   var res = exportCm(
     exportCfg["mappingCfgId"],
     exportCfg["sdkVersions"],
-    // exportCfg["excludedModules"],
     exportCfg["includedPrimModules"],
     exportCfg["includedAttrModules"]
   );

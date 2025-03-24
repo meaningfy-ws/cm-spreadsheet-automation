@@ -38,6 +38,7 @@ function exportCm(mappingCfgId, sdkVersions, includedPrimModules, includedAttrMo
   const excludedAttrModules = arrayDifference(attrModules, includedAttrModules);
   Logger.log(`excludedPrimModules: ${JSON.stringify(excludedPrimModules)},
     excludedAttrModules: ${JSON.stringify(excludedAttrModules)}`);  
+
   resultSpreadsheets = [];
   let filteringCriteria = {
     // excludedModules: excludedModules  // FIXME: remove excludedModules

@@ -54,37 +54,36 @@
       <label for="sdk_1_10">1.13</label><br>
     </div>
     <p>Select one or more modules to be included in the export</p>
-    <div>
-      <input type="checkbox" id="module_1" name="module" value="1" checked>
-      <label for="module_1">1</label><br>
-      <input type="checkbox" id="module_16" name="module" value="1.6" checked>
-      <label for="module_1_6">1.6</label><br>
-      <input type="checkbox" id="module_2" name="module" value="2" checked>
-      <label for="module_2">2</label><br>
-      <input type="checkbox" id="module_3" name="module" value="3" checked>
-      <label for="module_3">3</label><br>
-      <input type="checkbox" id="module_36" name="module" value="3.6" checked>
-      <label for="module_3_6">3.6</label><br>
-      <input type="checkbox" id="module_4" name="module" value="4" checked>
-      <label for="module_4">4</label><br>
-      <input type="checkbox" id="module_46" name="module" value="4.6" checked>
-      <label for="module_4_6">4.6</label><br>
-      <input type="checkbox" id="module_5" name="module" value="5" checked>
-      <label for="module_5">5</label><br>
-      <input type="checkbox" id="module_6" name="module" value="6" checked>
-      <label for="module_6">6</label><br>
-      <input type="checkbox" id="module_7" name="module" value="7" checked>
-      <label for="module_7">7</label><br>
-      <input type="checkbox" id="module_8" name="module" value="8" checked>
-      <label for="module_7">8</label><br>
-      <input type="checkbox" id="module_5p" name="module" value="5p" checked>
-      <label for="module_5p">5p</label><br>
-      <input type="checkbox" id="module_6p" name="module" value="6p" checked>
-      <label for="module_6p">6p</label><br>
-      <input type="checkbox" id="module_7p" name="module" value="7p" checked>
-      <label for="module_7p">7p</label><br>
+    <div style="margin-bottom: 2em">
+      <div style="display: grid; grid-template-columns: auto auto">
+        <div>
+          <label>
+            <input type="checkbox" class="checkAll" onclick="toggleGroup(this, '.primMods')"> <i>Check all</i>
+        </label>
+        <br>
+          <? for (const m of primModules) { ?>
+            <div>
+              <input type="checkbox" id="module_<?= m ?>" name="primModule" class="primMods" value="<?= m ?>" checked>
+              <label for="module_<?= m ?>"><?= m ?></label>
+            </div>
+          <? } ?>
+        </div>
+        <div>
+        <div>
+          <label>
+            <input type="checkbox" class="checkAll" onclick="toggleGroup(this, '.attrMods')"> <i>Check all</i>
+        </label>
+        <br>
+          <? for (const m of attrModules) { ?>
+            <div>
+              <input type="checkbox" id="module_<?= m ?>" name="attrModule" class="attrMods" value="<?= m ?>" checked>
+              <label for="module_<?= m ?>"><?= m ?></label>
+            </div>
+          <? } ?>
+        </div>
+      </div>
     </div>
-
+    
     <input type="button" value="Submit" class="action" onclick="form_data()" >
     <input type="button" value="Close" onclick="google.script.host.close()" />
   </div>
@@ -103,6 +102,11 @@
   <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js">
   </script>
   <script>
+    function toggleGroup(source, groupClass) {
+        const checkboxes = document.querySelectorAll(groupClass);
+        checkboxes.forEach(checkbox => checkbox.checked = source.checked);
+    }
+
     function onInProgress() {
         document.getElementById('input').style.display = 'none';
         document.getElementById('inprogress').style.display = 'block';
@@ -144,8 +148,8 @@
         var values = {
           "mappingCfgId": $("input[name=cfgId]:checked").val(),
           "sdkVersions": $("input[name=sdk]:checked").map(function() { return $(this).val() }).get(),
-          "includedModules": $("input[name=module]:checked").map(function() { return $(this).val() }).get(),
-          "excludedModules": $("input[name=module]").map(function() { if ($(this).is(':not(:checked)')) return $(this).val() }).get()
+          "includedPrimModules": $("input[name=primModule]:checked").map(function() { return $(this).val() }).get(),
+          "includedAttrModules": $("input[name=attrModule]:checked").map(function() { return $(this).val() }).get()
         };
         google.script.run.withSuccessHandler(onSuccess).withFailureHandler(onFailure).initExportCm(values);
         onInProgress();
