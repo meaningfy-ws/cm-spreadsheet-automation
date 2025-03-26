@@ -26,36 +26,21 @@ function getColumnIdxByHeaderName(sheet, colName, start=0) {
 }
 
 /**
- * Gets a 2D array of rows data that were not hidden by a filter applied to the sheet.
- */
-function getVisibleSheetData(sheet, skipHeader = true) {
-  console.time('getVisibleSheetData');
-  var range = sheet.getDataRange();
-  var rawData = range.getValues();
-  var visibleRows = [];
-
-  // Get the filtered rows (visible rows)
-  var numRows = range.getNumRows();
-  for (var i = 1 + skipHeader; i <= numRows; i++) { // Loop through all rows, skip header
-    if (!sheet.isRowHiddenByFilter(i)) {
-      visibleRows.push(rawData[i - 1]);
-    }
-  }
-  console.timeEnd('getVisibleSheetData');
-  return visibleRows;
-}
-
-/**
+ * Custom filtering function for a sheet data. 
  * 
+ * Replaces Google Spreadsheet built-in filtering that is too slow (due to lack
+ * of accompanying bulk functions) and has limitations (when copying a range
+ * with a filter applied).
+ *
  * @param sheet: A sheet with data. All data range will be processed.
- * @param predicates: An array of functions of signature: (Array) => Boolean. The function
- *                    is designated to work with a row data. If a function
- *                    returns false, then a row should be filtered out.
- * 
- * Returns: 2D array of row data that matches the conditions specified by predicates.
+ * @param predicates: An array of functions of signature: (Array) => Boolean.
+ *                    The function is designated to work with a row data. If a
+ *                    function returns false, then a row should be filtered out.
+ *
+ * Returns: 2D array of row data that matches the conditions specified by
+ * predicates.
  */
 function getFilteredData(sheet, predicates, skipHeader = true) {
-  console.time('getFilteredData');
   var range = sheet.getDataRange();
   var rawData = range.getValues();
   var visibleRows = [];
@@ -69,62 +54,25 @@ function getFilteredData(sheet, predicates, skipHeader = true) {
       visibleRows.push(row);
     }
   }
-  console.timeEnd('getFilteredData');
   return visibleRows;
 }
 
 /**
- * Doesn't support copying format.
+ * A replacement for `sheet.copyTo` built-in function.
+ * 
+ * The function works on raw JS data.
+ * Doesn't support copying format, but allows to set text format for the target
+ * range.
  */
-function copyDataBetweenSheets(sourceData, destRange, options) {
-  // let destRange_ = destRange ? destRange : destSheet.getDataRange();
-  console.time('copyDataBetweenSheets');
+function copyRawDataTo(sourceData, destRange, options) {
   let asText = options.hasOwnProperty('asText') ? options.asText : false;
   if (asText) {
     setTextFormat(destRange);
   }
   destRange.setValues(sourceData);
-  console.timeEnd('copyDataBetweenSheets');
 }
-/**
- * Copies data from a sheet to another sheet (in the same spreadsheet) given ranges.
- * 
- * Pastes values and format.
-*/
 
-// function copyRangeBetweenSheets(sourceSheet, destSheet, sourceRange, destRange, options) {
-//   assert(
-//     Boolean(sourceRange) == Boolean(destRange),
-//     "One of the ranges provided, but the other one is missing."
-//   );
-//   let asText = options.hasOwnProperty('asText') ? options.asText : false;
-
-//   let sourceRange_ = sourceRange ? sourceRange : sourceSheet.getDataRange();
-//   let destRange_ = destRange ? destRange : destSheet.getDataRange();
-//   Logger.log(`DEBUG: sourceRange_ size: ${sourceRange_.getNumRows()} x ${sourceRange_.getNumColumns()}`);
-//   Logger.log(`DEBUG: destRange_ size: ${destRange_.getNumRows()} x ${destRange_.getNumColumns()}`);
-  
-//   if (asText) {
-//     setTextFormat(destRange_);
-//   }
-//   destSheet.getRange('A1').activate();
-//   // SpreadsheetApp.flush();
-//   // sourceRange_.copyTo(destRange_, SpreadsheetApp.CopyPasteType.PASTE_FORMAT, false);
-//   sourceRange_.copyTo(destRange_, SpreadsheetApp.CopyPasteType.PASTE_VALUES, false);
-//   SpreadsheetApp.flush();
-//   // SpreadsheetApp.getActive().waitForAllDataExecutionsCompletion(60);
-// }
-
-/**
- * Copies all data from a sheet to another sheet (in the same spreadsheet).
- * 
- * Pastes values and format.
-*/
-// TODO: rename to copySheetData
 function copySheetData(sourceData, destSheet, options, offset = 0, skipHeader = true) {
-  if (!sourceData && Array.isArray(sourceData[0])) {
-    let a = 1;
-  }
   assert(
     sourceData && Array.isArray(sourceData[0]),
     "Incomplete or wrongly structured data."
@@ -136,10 +84,9 @@ function copySheetData(sourceData, destSheet, options, offset = 0, skipHeader = 
   const destRange = destSheet.getRange(
     firstRowIdx, 1, sourceData.length, sourceData[0].length
   );
-  copyDataBetweenSheets(sourceData, destRange, options);
+  copyRawDataTo(sourceData, destRange, options);
 }
 
-// instead of : appendSourceDataAtTheEnd
 function appendSheetData(sourceData, destSheet, options) {
   // Find last row with data in destination sheet
   let lastRowDest = destSheet.getLastRow(); 
@@ -149,12 +96,16 @@ function appendSheetData(sourceData, destSheet, options) {
 
 /**
  * Copy the source sheet to the external spreadsheet. The function mimics copy &
- * values-and-format-only paste functionallity for two different spreadsheets that
- * is missing from the SDK.
+ * values-and-format-only paste functionallity for two different spreadsheets
+ * that is missing from the SDK.
 */
-function copySheetDataAndFormatToExtSpreadsheet(sourceSheet, extSpreadsheet, newExtSheetName, asText) {
+function copySheetDataAndFormatToExtSpreadsheet(
+  sourceSheet, extSpreadsheet, newExtSheetName, asText
+) {
   // 1. copy the sheet to the ext spreadsheet - just for the sake of copying format
-  const targetSheet = copySheetToExternalSpreadsheet(sourceSheet, extSpreadsheet, newExtSheetName, asText);
+  const targetSheet = copySheetToExternalSpreadsheet(
+    sourceSheet, extSpreadsheet, newExtSheetName, asText
+  );
   // 2. copy data (range) from ext spreadsheet to the sheet created above - using get/setValues
   copyRangeDataToExternalSheet(sourceSheet.getDataRange(), targetSheet);
   return targetSheet;
@@ -166,7 +117,9 @@ function copySheetDataAndFormatToExtSpreadsheet(sourceSheet, extSpreadsheet, new
 * The created sheet is the exact copy of the source sheet. The function cannot
 * resolve formulas into values (that is perform values-only pasting).
 */
-function copySheetToExternalSpreadsheet(sourceSheet, extSpreadsheet, newExtSheetName, asText) {
+function copySheetToExternalSpreadsheet(
+  sourceSheet, extSpreadsheet, newExtSheetName, asText
+) {
   let targetSheet = sourceSheet.copyTo(extSpreadsheet);
   if (asText) {
     setTextFormat(targetSheet.getDataRange());
@@ -206,7 +159,9 @@ function appendTimestamp(name) {
 *
 * rightSideColsToHideIdxes is optional.
 */
-function deleteOrHideAuxiliaryRightSideColumns(sheet, lastRightColToKeepIdx, rightSideColsToHideIdxes = []) {
+function deleteOrHideAuxiliaryRightSideColumns(
+  sheet, lastRightColToKeepIdx, rightSideColsToHideIdxes = []
+) {
   var firstRightColToKeepIdx = sheet.getLastColumn() + 1;
   var colsToKeep = Array.from(rightSideColsToHideIdxes).sort().reverse();
   var colsToKeepCnt = rightSideColsToHideIdxes.length;
@@ -222,18 +177,22 @@ function deleteOrHideAuxiliaryRightSideColumns(sheet, lastRightColToKeepIdx, rig
 }
 
 function deleteColumnsBetween(sheet, lastLeftColToKeepIdx, firstRightColToKeepIdx) {
-  var lastColToDeleteIdx = firstRightColToKeepIdx === undefined ? sheet.getLastColumn() - 1 : firstRightColToKeepIdx - 1;
+  var lastColToDeleteIdx = (
+    firstRightColToKeepIdx === undefined ? sheet.getLastColumn() - 1 : firstRightColToKeepIdx - 1
+  );
   var colToDeleteNum = lastColToDeleteIdx - lastLeftColToKeepIdx;
   if (colToDeleteNum > 0) {
-    Logger.log(`Delete ${colToDeleteNum} columns from ${sheet.getName()} (starting column: ${lastLeftColToKeepIdx + 1}) `)
+    // Logger.log(`DEBUG: Delete ${colToDeleteNum} columns from ${sheet.getName()} (starting column: ${lastLeftColToKeepIdx + 1}) `)
     sheet.deleteColumns(lastLeftColToKeepIdx + 1, colToDeleteNum);
 
   }
 }
 
 /**
-* 
-* colCompIdx: index of a column for cell value comparison
+* Finds a row in the sheet by searching for a cell in the specified column that
+* contains the given value.
+
+* @param colCompIdx: index of a column for cell value comparison
 */
 function findRowByValue(sheet, colCompIdx, matchText) {
   const values = sheet.getDataRange().getValues();
@@ -304,7 +263,6 @@ function deleteRowsByColumnValue(sheet, cellValue, startRowIdx, colIdx) {
     }
   });
 }
-
 
 function createRowsLookupIndex(arr) {
   return {
@@ -403,9 +361,7 @@ function removeFromArray(obj, arr) {
 }
 
 function getColumnUniqueValuesByColName(sheet, columnName, datatype=String, skipHeader=true) {
-  Logger.log(`getColumnUniqueValuesByColName col name: ${columnName}`);
   const columnIdx = getColumnIdxByHeaderName(sheet, columnName, start=5);  // FIXME
-  Logger.log(`columnIdx: ${columnIdx}`);
   return getColumnUniqueValuesByColIdx(sheet, columnIdx, datatype, skipHeader);
 }
 /**
@@ -422,7 +378,9 @@ function getColumnUniqueValuesByColIdx(sheet, columnIdx, datatype=String, skipHe
 
 // source: https://stackoverflow.com/a/19746771
 function areArraysEqual(arr1, arr2) {
-  return arr1.length === arr2.length && arr1.every(function(value, index) { return value === arr2[index]});
+  return arr1.length === arr2.length && arr1.every(
+    function(value, index) { return value === arr2[index]}
+  );
 }
 
 /**
@@ -455,4 +413,24 @@ function arrayDifference(arr1, arr2) {
 
 function isEmptyArray(v) {
   return Array.isArray(v) && !v.length;
+}
+
+
+/** *** Deprecated functions *** */
+/**
+ * Gets a 2D array of rows data that were not hidden by a filter applied to the sheet.
+ */
+function getVisibleSheetData(sheet, skipHeader = true) {
+  var range = sheet.getDataRange();
+  var rawData = range.getValues();
+  var visibleRows = [];
+
+  // Get the filtered rows (visible rows)
+  var numRows = range.getNumRows();
+  for (var i = 1 + skipHeader; i <= numRows; i++) { // Loop through all rows, skip header
+    if (!sheet.isRowHiddenByFilter(i)) {
+      visibleRows.push(rawData[i - 1]);
+    }
+  }
+  return visibleRows;
 }

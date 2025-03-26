@@ -2,9 +2,9 @@
  * Entry point for CM export automation.
  */
 
-// if endabled then intermediate 'Rules-All' and 'Mapping Groups-All' 
-// sheets will be preserved in the generated spreadsheet
-const DEBUG_MODE = true;
+// if endabled then auxiliary 'Rules-All', 'Attribute Rules-All' and 'Mapping
+// Groups-All' sheets will be preserved in the generated spreadsheet
+const DEBUG_MODE = false;
 
 
 function onOpen(e) {
@@ -12,17 +12,17 @@ function onOpen(e) {
   
   // Create menu option
   ui.createAddonMenu()
-    // .addSubMenu(ui.createMenu("CM automation")
       .addItem("Export CM", "exportCmDialog")
-    // )
     .addToUi();
 };
 
 function exportCmDialog() {
   const ui = SpreadsheetApp.getUi();
-  //Call the HTML file and set the width and height
+  // Call the HTML file and set the width and height
   var htmlTemplate = HtmlService.createTemplateFromFile("cm_export_cfg_dialog");
-  const [primaryModules, attrModules] = collectUniqueModuleNumbers(SpreadsheetApp.getActive());
+  const [primaryModules, attrModules] = collectUniqueModuleNumbers(
+    SpreadsheetApp.getActive()
+  );
   htmlTemplate.primModules = primaryModules.toSorted();
   htmlTemplate.attrModules = attrModules.toSorted();
   
@@ -35,8 +35,8 @@ function exportCmDialog() {
 };
 
 function initExportCm(exportCfg) {
-  Logger.log("Starting new CM export task ...");
-  Logger.log(`Read config: ${JSON.stringify(exportCfg)}`);
+  Logger.log("INFO: Starting new CM export task ...");
+  Logger.log(`DEBUG: Read config: ${JSON.stringify(exportCfg)}`);
   if (
     isEmptyArray(exportCfg["sdkVersions"])
     || (
@@ -52,6 +52,6 @@ function initExportCm(exportCfg) {
     exportCfg["includedPrimModules"],
     exportCfg["includedAttrModules"]
   );
-  Logger.log("Exporting finished!");
+  Logger.log("INFO: Exporting finished!");
   return res;
 };
