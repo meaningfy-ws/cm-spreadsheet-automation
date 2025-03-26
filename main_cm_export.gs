@@ -37,6 +37,15 @@ function exportCmDialog() {
 function initExportCm(exportCfg) {
   Logger.log("Starting new CM export task ...");
   Logger.log(`Read config: ${JSON.stringify(exportCfg)}`);
+  if (
+    isEmptyArray(exportCfg["sdkVersions"])
+    || (
+      isEmptyArray(exportCfg["includedPrimModules"])
+      && isEmptyArray(exportCfg["includedAttrModules"])
+      )
+  ) {
+    throw Error("Invalid configuration. SDK or/and modules were not provided.");
+  }
   var res = exportCm(
     exportCfg["mappingCfgId"],
     exportCfg["sdkVersions"],

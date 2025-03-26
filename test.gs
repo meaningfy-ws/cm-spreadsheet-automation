@@ -131,14 +131,36 @@ function testRemovePrereqNodeRowsForNode(dataIndex) {
   Logger.log("INFO: test `testRemovePrereqNodeRowsForNode` (rule 3) passed.")
 }
 
+/**
+ * Starting debugging session for extensions launched via UI is not possible.
+ * Thus, this function provides an exemplary input configuration for 
+ * the main CM export function. The config sets reflects configuration
+ * that could be set via the UI.
+ */
 function cmExportManualTest() {
-  let exportCfg = {
+  let exportCfg1 = {
     "mappingCfgId": "10-24_vX.Y (Module 1-4)",
     // "excludedModules": [],
     "includedPrimModules": ["1", "1.6", "2", "3", "3.6", "4", "4.6", "5", "6", "7", "8", "5p", "6p", "7p"],
     "includedAttrModules": ["1a", "2a"],
     "sdkVersions": ["1.10"]
   };
+  let exportCfg2 = {
+    "mappingCfgId": "1-40+CEI+T01-T02+E1-E6_vX.Y (Module 7+8)",
+    // "excludedModules": [],
+    "includedPrimModules": ["1.7", "7", "8"],
+    "includedAttrModules": ["7a", "8a"],
+    "sdkVersions": ["1.3.0"]
+  };
+  let exportCfg3 = {
+    "mappingCfgId": "1-40+CEI+T01-T02+E1-E6_vX.Y (Module 7+8)",
+    // "excludedModules": [],
+    "includedPrimModules": ["8"],
+    "includedAttrModules": [],
+    "sdkVersions": ["1.3.0"]
+  };
+  // let exportCfg = exportCfg1;
+  let exportCfg = exportCfg2;
   let res = exportCm(
     exportCfg["mappingCfgId"],
     exportCfg["sdkVersions"],

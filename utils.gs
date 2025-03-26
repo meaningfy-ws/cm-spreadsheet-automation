@@ -26,7 +26,7 @@ function getColumnIdxByHeaderName(sheet, colName, start=0) {
 }
 
 /**
- * Gets 2D array of rows data that were not hidden by a filter applied to the sheet.
+ * Gets a 2D array of rows data that were not hidden by a filter applied to the sheet.
  */
 function getVisibleSheetData(sheet, skipHeader = true) {
   console.time('getVisibleSheetData');
@@ -46,9 +46,37 @@ function getVisibleSheetData(sheet, skipHeader = true) {
 }
 
 /**
+ * 
+ * @param sheet: A sheet with data. All data range will be processed.
+ * @param predicates: An array of functions of signature: (Array) => Boolean. The function
+ *                    is designated to work with a row data. If a function
+ *                    returns false, then a row should be filtered out.
+ * 
+ * Returns: 2D array of row data that matches the conditions specified by predicates.
+ */
+function getFilteredData(sheet, predicates, skipHeader = true) {
+  console.time('getFilteredData');
+  var range = sheet.getDataRange();
+  var rawData = range.getValues();
+  var visibleRows = [];
+
+  // Get the filtered rows (visible rows)
+  var numRows = range.getNumRows();
+  let row;
+  for (var i = 0 + skipHeader; i < numRows; i++) { // Loop through all rows, skip header
+    row = rawData[i];
+    if (predicates.every(fn => fn(row))) {
+      visibleRows.push(row);
+    }
+  }
+  console.timeEnd('getFilteredData');
+  return visibleRows;
+}
+
+/**
  * Doesn't support copying format.
  */
-function copyDataBetweenSheets(sourceSheet, destSheet, sourceData, destRange, options) {
+function copyDataBetweenSheets(sourceData, destRange, options) {
   // let destRange_ = destRange ? destRange : destSheet.getDataRange();
   console.time('copyDataBetweenSheets');
   let asText = options.hasOwnProperty('asText') ? options.asText : false;
@@ -92,32 +120,31 @@ function copyDataBetweenSheets(sourceSheet, destSheet, sourceData, destRange, op
  * 
  * Pastes values and format.
 */
-// TODO: rename to copySheetDataBetweenSheets
-function copyDataRangeBetweenSheets(sourceSheet, destSheet, options, skipHeader = true) {
-  // copyRangeBetweenSheets(sourceSheet, destSheet, null, null, options);
-  let sourceData = getVisibleSheetData(sourceSheet);
-  const destRange = destSheet.getRange(1 + skipHeader, 1, sourceData.length, sourceSheet.getLastColumn());
-  copyDataBetweenSheets(sourceSheet, destSheet, sourceData, destRange, options);
+// TODO: rename to copySheetData
+function copySheetData(sourceData, destSheet, options, offset = 0, skipHeader = true) {
+  if (!sourceData && Array.isArray(sourceData[0])) {
+    let a = 1;
+  }
+  assert(
+    sourceData && Array.isArray(sourceData[0]),
+    "Incomplete or wrongly structured data."
+  );
+  let firstRowIdx = 1 + offset;
+  if (skipHeader && firstRowIdx == 1) {
+    firstRowIdx = 2;
+  }
+  const destRange = destSheet.getRange(
+    firstRowIdx, 1, sourceData.length, sourceData[0].length
+  );
+  copyDataBetweenSheets(sourceData, destRange, options);
 }
 
-// TODO: rename to appendSourceDataAtTheEnd
-function copyRangeBetweenSheetsAtTheEnd(sourceSheet, destSheet, options) {
+// instead of : appendSourceDataAtTheEnd
+function appendSheetData(sourceData, destSheet, options) {
   // Find last row with data in destination sheet
   let lastRowDest = destSheet.getLastRow(); 
-  let lastColNo = sourceSheet.getLastColumn();
 
-  // let lastRowSource = sourceSheet.getLastRow();
-  // let sourceRange = sourceSheet.getRange(2, 1, lastRowSource - 1, lastColumnSource);
-
-  let sourceData = getVisibleSheetData(sourceSheet);
-  
-  // Specify destination range
-  let destRange = destSheet.getRange(
-    lastRowDest + 1, 1, sourceData.length, lastColNo
-  );
-
-  // copyRangeBetweenSheets(sourceSheet, destSheet, sourceRange, destRange, options);
-  copyDataBetweenSheets(sourceSheet, destSheet, sourceData, destRange, options);
+  copySheetData(sourceData, destSheet, options, offset = lastRowDest)
 }
 
 /**
@@ -424,4 +451,8 @@ function mergeAndSortArrays(arr1, arr2) {
 
 function arrayDifference(arr1, arr2) {
   return arr1.filter(item => !arr2.includes(item));
+}
+
+function isEmptyArray(v) {
+  return Array.isArray(v) && !v.length;
 }

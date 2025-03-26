@@ -33,16 +33,17 @@ function exportCm(mappingCfgId, sdkVersions, includedPrimModules, includedAttrMo
   const mgSheet = spreadsheet.getSheetByName(MASTER_CM_SS.SHEET.MG_EXPORT.NAME);
   const metadataSheet = spreadsheet.getSheetByName(MASTER_CM_SS.SHEET.METADATA.NAME);
   
-  const [primaryModules, attrModules] = collectUniqueModuleNumbers(spreadsheet);
-  const excludedPrimModules = arrayDifference(primaryModules, includedPrimModules);
-  const excludedAttrModules = arrayDifference(attrModules, includedAttrModules);
-  Logger.log(`excludedPrimModules: ${JSON.stringify(excludedPrimModules)},
-    excludedAttrModules: ${JSON.stringify(excludedAttrModules)}`);  
+  // const [primaryModules, attrModules] = collectUniqueModuleNumbers(spreadsheet);
+  // const excludedPrimModules = arrayDifference(primaryModules, includedPrimModules);  // FIXME: remove
+  // const excludedAttrModules = arrayDifference(attrModules, includedAttrModules);  // FIXME: remove
+  // Logger.log(`excludedPrimModules: ${JSON.stringify(excludedPrimModules)},
+  //   excludedAttrModules: ${JSON.stringify(excludedAttrModules)}`);  
 
   resultSpreadsheets = [];
   let filteringCriteria = {
     // excludedModules: excludedModules  // FIXME: remove excludedModules
-    excludedModules: excludedPrimModules
+    // excludedModules: excludedPrimModules,  // FIXME: remove
+    includedModules: includedPrimModules,
   };
   
   const mappingTypeName = getMappingTypeByMetadataCfgId(
@@ -93,9 +94,9 @@ function exportCm(mappingCfgId, sdkVersions, includedPrimModules, includedAttrMo
       name: EXPORTED_SS.SHEET.RULES.NAME,
       lastColName: EXPORTED_SS.SHEET.RULES.LAST_EXPORTED_COLUMN.NAME,
       rightsideColsToKeep: EXPORTED_SS.SHEET.RULES.RIGHTSIDE_COL_NAMES_TO_KEEP,
-      deleteAuxColumns: true
-      // deleteAuxColumns: false
+      deleteAuxColumns: false
     };
+    let rulesTargetSheetCfg = targetSheetCfg;
     console.time('export rules');
     exportSheet(
       rulesSheet,
@@ -103,10 +104,9 @@ function exportCm(mappingCfgId, sdkVersions, includedPrimModules, includedAttrMo
       newSpreadsheet,
       targetSheetCfg,
       filteringCriteria,
-      copyFn=copyDataRangeBetweenSheets
+      copyFn=copySheetData
     );
     console.timeEnd('export rules');
-
 
     // ****************** process Mapping Groups (export) sheet ***************
     sourceSheetCfg = {
@@ -127,11 +127,12 @@ function exportCm(mappingCfgId, sdkVersions, includedPrimModules, includedAttrMo
       newSpreadsheet,
       targetSheetCfg,
       filteringCriteria,
-      copyFn=copyDataRangeBetweenSheets
+      copyFn=copySheetData
     );
     console.timeEnd('export MG');
 
     // ****************** process Attribute Rules (export) sheet ***************
+    // Attribute rule rows will be appended to the Rules sheet
     console.time('export attr rule');
     
     sourceSheetCfg = {
@@ -142,20 +143,27 @@ function exportCm(mappingCfgId, sdkVersions, includedPrimModules, includedAttrMo
       name: EXPORTED_SS.SHEET.RULES.NAME,
       lastColName: EXPORTED_SS.SHEET.ATTR_RULES.LAST_EXPORTED_COLUMN.NAME,
       rightsideColsToKeep: EXPORTED_SS.SHEET.ATTR_RULES.RIGHTSIDE_COL_NAMES_TO_KEEP,
-      deleteAuxColumns: true
+      deleteAuxColumns: false
       // deleteAuxColumns: false
     };
-    filteringCriteria.excludedModules = excludedAttrModules;  // use attr rule modules
+    // filteringCriteria.excludedModules = excludedAttrModules;  // FIXME: remove
+    filteringCriteria.includedModules = includedAttrModules;  // use attr rule modules
     exportSheet(
       attrRulesSheet,
       sourceSheetCfg,
       newSpreadsheet,
       targetSheetCfg,
       filteringCriteria,
-      copyFn=copyRangeBetweenSheetsAtTheEnd,
+      copyFn=appendSheetData,
       options={intermSheetName: "Attr rules-All"}
     );
     console.timeEnd('export attr rule');
+
+    // Remove excessive columns and hide auxiliary ones after processing Rules and Attribute Rules
+    deleteOrHideAuxiliaryRightSideColumnsByName(
+      newSpreadsheet.getSheetByName(rulesTargetSheetCfg.name),
+      rulesTargetSheetCfg
+    );
   }
 
   rulesSheet.getRange(1, 1).activate();
@@ -195,7 +203,7 @@ function exportSheet(
   targetSpreadsheet,
   targetSheetCfg,
   filteringCriteria,
-  copyFn = copyDataRangeBetweenSheets,
+  copyFn = copySheetData,
   options
 ) {
   // copy the source sheet content to an auxiliary sheet
@@ -210,31 +218,29 @@ function exportSheet(
   console.timeEnd('> copy sheet');
 
   console.time('> filtering');
-  // filter the new sheet
-  newAuxSheet.getDataRange().createFilter();
-  // filter by modules
-  setFilterOnColumn(
-    newAuxSheet, sourceSheetCfg.modulesColumnName, filteringCriteria.excludedModules
+
+  const sdkColIdx = getColumnIdxByHeaderName(
+    newAuxSheet, filteringCriteria.sdk
   );
-  // filter by SDK
-  setFilterOnSdkColumn(newAuxSheet, filteringCriteria.sdk);  // FIXME: uncomment
+  const modulesColIdx = getColumnIdxByHeaderName(
+    newAuxSheet, sourceSheetCfg.modulesColumnName
+  );
+  const predicates = [
+    buildSdkFilter(sdkColIdx),
+    buildModuleFilter(filteringCriteria.includedModules, modulesColIdx)
+  ];
+  const filteredData = getFilteredData(newAuxSheet, predicates);
   console.timeEnd('> filtering');
   
   console.time('> copyFn');
   let targetSheet = targetSpreadsheet.getSheetByName(targetSheetCfg.name);
   // copy filtered range to another existing sheet
-  const lastColIdx = getColumnIdxByHeaderName(
-    newAuxSheet, targetSheetCfg.lastColName
-  );
-
-  const rightsideColsToKeepIdx = targetSheetCfg.rightsideColsToKeep.map(
-    (name) => getColumnIdxByHeaderName(newAuxSheet, name, start=lastColIdx)
-  );
   
-  // TODO: pass copying function as an argument to this function and
-  // use that instead of the above fixed function.
-  copyFn(newAuxSheet, targetSheet, options={asText: true});
-  // copyDataRangeBetweenSheets(newAuxSheet, targetSheet, true);
+  if (!isEmptyArray(filteredData)) {
+    copyFn(filteredData, targetSheet, options={asText: true});
+
+  }
+  // copyFn(newAuxSheet, targetSheet, options={asText: true});
   
   // Delete extra right-side columns except for the special ones required for
   // conditional formatting. Required columns cannot be moved as it causes
@@ -243,16 +249,52 @@ function exportSheet(
   console.timeEnd('> copyFn');
   
   console.time('> deleteOrHideAuxiliaryRightSideColumns');
+
   if (targetSheetCfg.deleteAuxColumns) {
-    deleteOrHideAuxiliaryRightSideColumns(
-      targetSheet, lastColIdx, rightsideColsToKeepIdx
-    );
+    deleteOrHideAuxiliaryRightSideColumnsByName(targetSheet, targetSheetCfg);
+    // deleteOrHideAuxiliaryRightSideColumns(
+    //   targetSheet, lastColIdx, rightsideColsToKeepIdx
+    // );
   }
   console.timeEnd('> deleteOrHideAuxiliaryRightSideColumns');
 
-  if (!DEBUG_MODE) {
+  if (DEBUG_MODE) {
+    // set built-in filter on auxiliary sheet for manual verification purposes
+    // Note that the Google SDK lacks a quick way to get total number of visible
+    // rows. Calling `isRowHiddenByFilter` for every row is very time-consuming
+    // so we cannot do an automatic check for the custom filtering method implemented
+    // in utils module.
+    newAuxSheet.getDataRange().createFilter();
+    // filter by modules
+    setFilterOnColumn(
+      newAuxSheet,
+      sourceSheetCfg.modulesColumnName,
+      getAllExcludedModules(filteringCriteria.includedModules)
+    );
+    // filter by SDK
+    setFilterOnSdkColumn(newAuxSheet, filteringCriteria.sdk);
+  } else {
     targetSpreadsheet.deleteSheet(newAuxSheet);
   }
+}
+
+/**
+ * A convenience function working on column names.
+ */
+function deleteOrHideAuxiliaryRightSideColumnsByName(
+  targetSheet, targetSheetCfg
+) {
+  const lastColIdx = getColumnIdxByHeaderName(
+    targetSheet, targetSheetCfg.lastColName
+  );
+
+  const rightsideColsToKeepIdx = targetSheetCfg.rightsideColsToKeep.map(
+    (name) => getColumnIdxByHeaderName(targetSheet, name, start=lastColIdx)
+  );
+
+  deleteOrHideAuxiliaryRightSideColumns(
+    targetSheet, lastColIdx, rightsideColsToKeepIdx
+  );
 }
 
 /**
@@ -288,6 +330,25 @@ function collectUniqueModuleNumbers(spreadsheet) {
   const primaryModules = mergeAndSortArrays(rModules, mgModules);
   const attrModules = arModules;
   return [primaryModules, attrModules];
+}
+
+function buildSdkFilter(columnIdx, expectedCellValue = "X") {
+  let dataArrIdx = columnIdx - 1;  // sheet column indexing starts at 1
+  function sdkFilter(rowData) {
+    let v = rowData[dataArrIdx];
+    return rowData[dataArrIdx] == expectedCellValue;
+  }
+  return sdkFilter;
+
+}
+
+function buildModuleFilter(acceptedModules, columnIdx, datatype=String) {
+  let dataArrIdx = columnIdx - 1;  // sheet column indexing starts at 1
+  function moduleFilter(rowData) {
+    let v = datatype(rowData[dataArrIdx]);
+    return acceptedModules.includes(datatype(rowData[dataArrIdx]));
+  }
+  return moduleFilter;
 }
 
 /**
@@ -389,4 +450,13 @@ function getMetadataByMetadataCfgId(mappingCfgId, colName, sheet) {
   );
   const colIdx = getColumnIdxByHeaderName(sheet_, colName);
   return sheet_.getRange(cfgRowIdx, colIdx).getValue();
+}
+
+function getAllExcludedModules(
+  includedModules,
+  spreadsheet=SpreadsheetApp.getActive()
+) {
+  const [primaryModules, attrModules] = collectUniqueModuleNumbers(spreadsheet);
+  const allModules = primaryModules.concat(attrModules);
+  return arrayDifference(allModules, includedModules);
 }
