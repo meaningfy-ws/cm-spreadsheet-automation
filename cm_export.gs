@@ -94,7 +94,9 @@ function exportCm(mappingCfgId, sdkVersions, includedPrimModules, includedAttrMo
       lastColName: EXPORTED_SS.SHEET.RULES.LAST_EXPORTED_COLUMN.NAME,
       rightsideColsToKeep: EXPORTED_SS.SHEET.RULES.RIGHTSIDE_COL_NAMES_TO_KEEP,
       deleteAuxColumns: true
+      // deleteAuxColumns: false
     };
+    console.time('export rules');
     exportSheet(
       rulesSheet,
       sourceSheetCfg,
@@ -103,6 +105,7 @@ function exportCm(mappingCfgId, sdkVersions, includedPrimModules, includedAttrMo
       filteringCriteria,
       copyFn=copyDataRangeBetweenSheets
     );
+    console.timeEnd('export rules');
 
 
     // ****************** process Mapping Groups (export) sheet ***************
@@ -115,7 +118,9 @@ function exportCm(mappingCfgId, sdkVersions, includedPrimModules, includedAttrMo
       lastColName: EXPORTED_SS.SHEET.MG.LAST_EXPORTED_COLUMN.NAME,
       rightsideColsToKeep: EXPORTED_SS.SHEET.MG.RIGHTSIDE_COL_NAMES_TO_KEEP,
       deleteAuxColumns: true
+      // deleteAuxColumns: false
     };
+    console.time('export MG');
     exportSheet(
       mgSheet,
       sourceSheetCfg,
@@ -124,8 +129,11 @@ function exportCm(mappingCfgId, sdkVersions, includedPrimModules, includedAttrMo
       filteringCriteria,
       copyFn=copyDataRangeBetweenSheets
     );
+    console.timeEnd('export MG');
 
     // ****************** process Attribute Rules (export) sheet ***************
+    console.time('export attr rule');
+    
     sourceSheetCfg = {
       name: MASTER_CM_SS.SHEET.ATTR_RULES_EXPORT.NAME,
       modulesColumnName: MASTER_CM_SS.SHEET.ATTR_RULES_EXPORT.COLUMN.MODULES.NAME,
@@ -135,6 +143,7 @@ function exportCm(mappingCfgId, sdkVersions, includedPrimModules, includedAttrMo
       lastColName: EXPORTED_SS.SHEET.ATTR_RULES.LAST_EXPORTED_COLUMN.NAME,
       rightsideColsToKeep: EXPORTED_SS.SHEET.ATTR_RULES.RIGHTSIDE_COL_NAMES_TO_KEEP,
       deleteAuxColumns: true
+      // deleteAuxColumns: false
     };
     filteringCriteria.excludedModules = excludedAttrModules;  // use attr rule modules
     exportSheet(
@@ -146,6 +155,7 @@ function exportCm(mappingCfgId, sdkVersions, includedPrimModules, includedAttrMo
       copyFn=copyRangeBetweenSheetsAtTheEnd,
       options={intermSheetName: "Attr rules-All"}
     );
+    console.timeEnd('export attr rule');
   }
 
   rulesSheet.getRange(1, 1).activate();
@@ -189,6 +199,7 @@ function exportSheet(
   options
 ) {
   // copy the source sheet content to an auxiliary sheet
+  console.time('> copy sheet');
   let intermSheetName = sourceSheetCfg.name + '-All';
   if (options && options.hasOwnProperty("intermSheetName")) {
     intermSheetName = options.intermSheetName;
@@ -196,7 +207,9 @@ function exportSheet(
   const newAuxSheet = copySheetDataAndFormatToExtSpreadsheet(
     sourceSheet, targetSpreadsheet, intermSheetName, true
   );
+  console.timeEnd('> copy sheet');
 
+  console.time('> filtering');
   // filter the new sheet
   newAuxSheet.getDataRange().createFilter();
   // filter by modules
@@ -204,9 +217,11 @@ function exportSheet(
     newAuxSheet, sourceSheetCfg.modulesColumnName, filteringCriteria.excludedModules
   );
   // filter by SDK
-  setFilterOnSdkColumn(newAuxSheet, filteringCriteria.sdk);
+  setFilterOnSdkColumn(newAuxSheet, filteringCriteria.sdk);  // FIXME: uncomment
+  console.timeEnd('> filtering');
   
-  const targetSheet = targetSpreadsheet.getSheetByName(targetSheetCfg.name);
+  console.time('> copyFn');
+  let targetSheet = targetSpreadsheet.getSheetByName(targetSheetCfg.name);
   // copy filtered range to another existing sheet
   const lastColIdx = getColumnIdxByHeaderName(
     newAuxSheet, targetSheetCfg.lastColName
@@ -225,11 +240,15 @@ function exportSheet(
   // conditional formatting. Required columns cannot be moved as it causes
   // conditional formatting rules to fail. Thus, as a a workaround the
   // unnecessary columns are removed. The special columns are hidden.
+  console.timeEnd('> copyFn');
+  
+  console.time('> deleteOrHideAuxiliaryRightSideColumns');
   if (targetSheetCfg.deleteAuxColumns) {
     deleteOrHideAuxiliaryRightSideColumns(
       targetSheet, lastColIdx, rightsideColsToKeepIdx
     );
   }
+  console.timeEnd('> deleteOrHideAuxiliaryRightSideColumns');
 
   if (!DEBUG_MODE) {
     targetSpreadsheet.deleteSheet(newAuxSheet);

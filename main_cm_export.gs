@@ -4,7 +4,7 @@
 
 // if endabled then intermediate 'Rules-All' and 'Mapping Groups-All' 
 // sheets will be preserved in the generated spreadsheet
-const DEBUG_MODE = false;
+const DEBUG_MODE = true;
 
 
 function onOpen(e) {

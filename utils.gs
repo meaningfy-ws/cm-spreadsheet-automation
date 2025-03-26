@@ -26,56 +26,98 @@ function getColumnIdxByHeaderName(sheet, colName, start=0) {
 }
 
 /**
+ * Gets 2D array of rows data that were not hidden by a filter applied to the sheet.
+ */
+function getVisibleSheetData(sheet, skipHeader = true) {
+  console.time('getVisibleSheetData');
+  var range = sheet.getDataRange();
+  var rawData = range.getValues();
+  var visibleRows = [];
+
+  // Get the filtered rows (visible rows)
+  var numRows = range.getNumRows();
+  for (var i = 1 + skipHeader; i <= numRows; i++) { // Loop through all rows, skip header
+    if (!sheet.isRowHiddenByFilter(i)) {
+      visibleRows.push(rawData[i - 1]);
+    }
+  }
+  console.timeEnd('getVisibleSheetData');
+  return visibleRows;
+}
+
+/**
+ * Doesn't support copying format.
+ */
+function copyDataBetweenSheets(sourceSheet, destSheet, sourceData, destRange, options) {
+  // let destRange_ = destRange ? destRange : destSheet.getDataRange();
+  console.time('copyDataBetweenSheets');
+  let asText = options.hasOwnProperty('asText') ? options.asText : false;
+  if (asText) {
+    setTextFormat(destRange);
+  }
+  destRange.setValues(sourceData);
+  console.timeEnd('copyDataBetweenSheets');
+}
+/**
  * Copies data from a sheet to another sheet (in the same spreadsheet) given ranges.
  * 
  * Pastes values and format.
 */
-function copyRangeBetweenSheets(sourceSheet, destSheet, sourceRange, destRange, options) {
-  assert(
-    Boolean(sourceRange) == Boolean(destRange),
-    "One of the ranges provided, but the other one is missing."
-  );
-  let asText = options.hasOwnProperty('asText') ? options.asText : false;
 
-  let sourceRange_ = sourceRange ? sourceRange : sourceSheet.getDataRange();
-  let destRange_ = destRange ? destRange : destSheet.getDataRange();
-  // Logger.log(`DEBUG: sourceRange_ size: ${sourceRange_.getNumRows()} x ${sourceRange_.getNumColumns()}`);
-  // Logger.log(`DEBUG: destRange_ size: ${destRange_.getNumRows()} x ${destRange_.getNumColumns()}`);
+// function copyRangeBetweenSheets(sourceSheet, destSheet, sourceRange, destRange, options) {
+//   assert(
+//     Boolean(sourceRange) == Boolean(destRange),
+//     "One of the ranges provided, but the other one is missing."
+//   );
+//   let asText = options.hasOwnProperty('asText') ? options.asText : false;
+
+//   let sourceRange_ = sourceRange ? sourceRange : sourceSheet.getDataRange();
+//   let destRange_ = destRange ? destRange : destSheet.getDataRange();
+//   Logger.log(`DEBUG: sourceRange_ size: ${sourceRange_.getNumRows()} x ${sourceRange_.getNumColumns()}`);
+//   Logger.log(`DEBUG: destRange_ size: ${destRange_.getNumRows()} x ${destRange_.getNumColumns()}`);
   
-  if (asText) {
-    setTextFormat(destRange_);
-  }
-  destSheet.getRange('A1').activate();
-  SpreadsheetApp.flush();
-  sourceRange_.copyTo(destRange_, SpreadsheetApp.CopyPasteType.PASTE_FORMAT, false);
-  SpreadsheetApp.flush();
-  sourceRange_.copyTo(destRange_, SpreadsheetApp.CopyPasteType.PASTE_VALUES, false);
-}
+//   if (asText) {
+//     setTextFormat(destRange_);
+//   }
+//   destSheet.getRange('A1').activate();
+//   // SpreadsheetApp.flush();
+//   // sourceRange_.copyTo(destRange_, SpreadsheetApp.CopyPasteType.PASTE_FORMAT, false);
+//   sourceRange_.copyTo(destRange_, SpreadsheetApp.CopyPasteType.PASTE_VALUES, false);
+//   SpreadsheetApp.flush();
+//   // SpreadsheetApp.getActive().waitForAllDataExecutionsCompletion(60);
+// }
 
 /**
  * Copies all data from a sheet to another sheet (in the same spreadsheet).
  * 
  * Pastes values and format.
 */
-function copyDataRangeBetweenSheets(sourceSheet, destSheet, options) {
-  copyRangeBetweenSheets(sourceSheet, destSheet, null, null, options);
+// TODO: rename to copySheetDataBetweenSheets
+function copyDataRangeBetweenSheets(sourceSheet, destSheet, options, skipHeader = true) {
+  // copyRangeBetweenSheets(sourceSheet, destSheet, null, null, options);
+  let sourceData = getVisibleSheetData(sourceSheet);
+  const destRange = destSheet.getRange(1 + skipHeader, 1, sourceData.length, sourceSheet.getLastColumn());
+  copyDataBetweenSheets(sourceSheet, destSheet, sourceData, destRange, options);
 }
 
+// TODO: rename to appendSourceDataAtTheEnd
 function copyRangeBetweenSheetsAtTheEnd(sourceSheet, destSheet, options) {
   // Find last row with data in destination sheet
   let lastRowDest = destSheet.getLastRow(); 
+  let lastColNo = sourceSheet.getLastColumn();
 
-  let lastRowSource = sourceSheet.getLastRow();
-  let lastColumnSource = sourceSheet.getLastColumn();
-  let sourceRange = sourceSheet.getRange(2, 1, lastRowSource - 1, lastColumnSource);
+  // let lastRowSource = sourceSheet.getLastRow();
+  // let sourceRange = sourceSheet.getRange(2, 1, lastRowSource - 1, lastColumnSource);
 
-  // Capture destination range
+  let sourceData = getVisibleSheetData(sourceSheet);
+  
+  // Specify destination range
   let destRange = destSheet.getRange(
-    // setting single row as a range, it will be automatically expanded
-    lastRowDest + 1, 1, 1, sourceRange.getNumColumns()
+    lastRowDest + 1, 1, sourceData.length, lastColNo
   );
 
-  copyRangeBetweenSheets(sourceSheet, destSheet, sourceRange, destRange, options);
+  // copyRangeBetweenSheets(sourceSheet, destSheet, sourceRange, destRange, options);
+  copyDataBetweenSheets(sourceSheet, destSheet, sourceData, destRange, options);
 }
 
 /**
@@ -156,7 +198,9 @@ function deleteColumnsBetween(sheet, lastLeftColToKeepIdx, firstRightColToKeepId
   var lastColToDeleteIdx = firstRightColToKeepIdx === undefined ? sheet.getLastColumn() - 1 : firstRightColToKeepIdx - 1;
   var colToDeleteNum = lastColToDeleteIdx - lastLeftColToKeepIdx;
   if (colToDeleteNum > 0) {
+    Logger.log(`Delete ${colToDeleteNum} columns from ${sheet.getName()} (starting column: ${lastLeftColToKeepIdx + 1}) `)
     sheet.deleteColumns(lastLeftColToKeepIdx + 1, colToDeleteNum);
+
   }
 }
 
@@ -332,7 +376,9 @@ function removeFromArray(obj, arr) {
 }
 
 function getColumnUniqueValuesByColName(sheet, columnName, datatype=String, skipHeader=true) {
-  const columnIdx = getColumnIdxByHeaderName(sheet, columnName);
+  Logger.log(`getColumnUniqueValuesByColName col name: ${columnName}`);
+  const columnIdx = getColumnIdxByHeaderName(sheet, columnName, start=5);  // FIXME
+  Logger.log(`columnIdx: ${columnIdx}`);
   return getColumnUniqueValuesByColIdx(sheet, columnIdx, datatype, skipHeader);
 }
 /**
