@@ -23,7 +23,7 @@ const MASTER_CM_SS = {
       }
     },
     ATTR_RULES_EXPORT: {
-      NAME: "Attribute Rules (export) - test",  // TODO: update value
+      NAME: "Attribute Rules (export)",
       COLUMN: {
         MODULES: {
           NAME: "Module"
