@@ -21,7 +21,7 @@ function getColumnIdxByHeaderName(spreadsheet, sheetName, colName, start=0) {
 function getColumnIdxByHeaderName(sheet, colName, start=0) {
   const headers = sheet.getRange("A1:1").getValues()[0];
   const colNum = headers.indexOf(colName, fromIndex=start);
-  if (colNum < 0) throw `Cannot find column '${colName}' in sheet ${sheet.getName()}!`;
+  if (colNum < 0) throw `Cannot find column '${colName}' in sheet '${sheet.getName()}'!`;
   return colNum + 1;
 }
 

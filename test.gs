@@ -159,8 +159,41 @@ function cmExportManualTest() {
     "includedAttrModules": [],
     "sdkVersions": ["1.3.0"]
   };
+  let exportCfg4 = {
+    "mappingCfgId": "1-40+CEI+T01-T02+E1-E6_vX.Y (All Modules)",
+    // "excludedModules": [],
+    "includedPrimModules": [
+      "1",
+      "1.6",
+      "1.7",
+      "2",
+      "3",
+      "3.6",
+      "4",
+      "4.6",
+      "5",
+      "6",
+      "7",
+      "8"
+    ],
+    "includedAttrModules": [
+      "1.6a",
+      "1a",
+      "2a",
+      "3.6a",
+      "3a",
+      "4.6a",
+      "4a",
+      "5a",
+      "6a",
+      "7a",
+      "8a"
+    ],
+    // "sdkVersions": ["1.5", "1.13"]
+    "sdkVersions": ["1.6.0", "1.7.0"]
+  };
   // let exportCfg = exportCfg1;
-  let exportCfg = exportCfg2;
+  let exportCfg = exportCfg4;
   let res = exportCm(
     exportCfg["mappingCfgId"],
     exportCfg["sdkVersions"],

@@ -33,7 +33,7 @@ function exportCm(mappingCfgId, sdkVersions, includedPrimModules, includedAttrMo
   const metadataSheet = spreadsheet.getSheetByName(MASTER_CM_SS.SHEET.METADATA.NAME);
 
   resultSpreadsheets = [];
-  let filteringCriteria = {includedModules: includedPrimModules};
+  let filteringCriteria;
   
   const mappingTypeName = getMappingTypeByMetadataCfgId(
     spreadsheet.getSheetByName(MASTER_CM_SS.SHEET.METADATA_CFG.NAME), mappingCfgId
@@ -47,7 +47,10 @@ function exportCm(mappingCfgId, sdkVersions, includedPrimModules, includedAttrMo
   // export a new spreadsheet for every selected SDK version
   for (let i = 0; i < sdkVersions.length; i++) {
     const currSdk = sdkVersions[i];
-    filteringCriteria.sdk = currSdk;
+    filteringCriteria = {
+      includedModules: includedPrimModules,
+      sdk: currSdk
+    };
     Logger.log(`INFO: Processing ${sdkVersions[i]} ...`);
     
     const newSpreadsheetName = constructExportFileName(mappingTypeName, currSdk);

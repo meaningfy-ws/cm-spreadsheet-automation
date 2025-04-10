@@ -2,7 +2,7 @@
  * Entry point for CM export automation.
  */
 
-// if endabled then auxiliary 'Rules-All', 'Attribute Rules-All' and 'Mapping
+// if enabled then auxiliary 'Rules-All', 'Attribute Rules-All' and 'Mapping
 // Groups-All' sheets will be preserved in the generated spreadsheet
 const DEBUG_MODE = false;
 
@@ -45,6 +45,9 @@ function initExportCm(exportCfg) {
       )
   ) {
     throw Error("Invalid configuration. SDK or/and modules were not provided.");
+  }
+  if (!exportCfg.hasOwnProperty("mappingCfgId")) {
+    throw Error("Invalid configuration. Metadata configuration was not provided.");
   }
   var res = exportCm(
     exportCfg["mappingCfgId"],
