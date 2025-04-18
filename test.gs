@@ -150,7 +150,7 @@ function cmExportManualTest() {
     // "excludedModules": [],
     "includedPrimModules": ["1.7", "7", "8"],
     "includedAttrModules": ["7a", "8a"],
-    "sdkVersions": ["1.3.0"]
+    "sdkVersions": ["1.3"]
   };
   let exportCfg3 = {
     "mappingCfgId": "1-40+CEI+T01-T02+E1-E6_vX.Y (Module 7+8)",
@@ -193,7 +193,7 @@ function cmExportManualTest() {
     "sdkVersions": ["1.6.0", "1.7.0"]
   };
   // let exportCfg = exportCfg1;
-  let exportCfg = exportCfg4;
+  let exportCfg = exportCfg2;
   let res = exportCm(
     exportCfg["mappingCfgId"],
     exportCfg["sdkVersions"],

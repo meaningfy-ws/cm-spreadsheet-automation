@@ -18,10 +18,17 @@ function getColumnIdxByHeaderName(spreadsheet, sheetName, colName, start=0) {
  * 
  * Uses header value stored in the first row.
 */
-function getColumnIdxByHeaderName(sheet, colName, start=0) {
-  const headers = sheet.getRange("A1:1").getValues()[0];
-  const colNum = headers.indexOf(colName, fromIndex=start);
-  if (colNum < 0) throw `Cannot find column '${colName}' in sheet '${sheet.getName()}'!`;
+function getColumnIdxByHeaderName(sheet, colName, start=0, asText=true) {
+  let headers = sheet.getRange("A1:1").getValues()[0];
+  let colName_ = colName;
+  if (asText) {
+    headers = headers.map(x => String(x));
+    colName_ = String(colName);
+  }
+  const colNum = headers.indexOf(colName_, fromIndex=start);
+  if (colNum < 0) {
+    throw `Cannot find column '${colName_}' in sheet '${sheet.getName()}' (asText=${asText})!`;
+  }
   return colNum + 1;
 }
 
