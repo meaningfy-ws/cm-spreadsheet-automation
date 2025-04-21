@@ -34,6 +34,9 @@ const MASTER_CM_SS = {
       COLUMN: {
         MODULES: {
           NAME: "Min Module"
+        },
+        XPATH: {
+          NAME: "Iterator XPath"
         }
       }
     },

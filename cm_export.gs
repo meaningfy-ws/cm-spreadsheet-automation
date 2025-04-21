@@ -102,6 +102,7 @@ function exportCm(mappingCfgId, sdkVersions, includedPrimModules, includedAttrMo
     sourceSheetCfg = {
       name: MASTER_CM_SS.SHEET.MG_EXPORT.NAME,
       modulesColumnName: MASTER_CM_SS.SHEET.MG_EXPORT.COLUMN.MODULES.NAME,
+      xPathColumnName: MASTER_CM_SS.SHEET.MG_EXPORT.COLUMN.XPATH.NAME
     };
     targetSheetCfg = {
       name: EXPORTED_SS.SHEET.MG.NAME,
@@ -204,10 +205,19 @@ function exportSheet(
   const modulesColIdx = getColumnIdxByHeaderName(
     newAuxSheet, sourceSheetCfg.modulesColumnName
   );
-  const predicates = [
+  let predicates = [
     buildSdkFilter(sdkColIdx),
     buildModuleFilter(filteringCriteria.includedModules, modulesColIdx)
   ];
+  
+  // extra filter for MG sheet only
+  if (sourceSheetCfg.hasOwnProperty("xPathColumnName")) {
+    const xPathColIdx = getColumnIdxByHeaderName(
+      newAuxSheet, sourceSheetCfg.xPathColumnName
+    );
+    let p = buildEmptyColumnFilter(xPathColIdx);
+    predicates.push(p);
+  }
   const filteredData = getFilteredData(newAuxSheet, predicates);
   
   let targetSheet = targetSpreadsheet.getSheetByName(targetSheetCfg.name);
@@ -305,7 +315,6 @@ function buildSdkFilter(columnIdx, expectedCellValue = "X") {
     return rowData[dataArrIdx] == expectedCellValue;
   }
   return sdkFilter;
-
 }
 
 function buildModuleFilter(acceptedModules, columnIdx, datatype=String) {
@@ -315,6 +324,15 @@ function buildModuleFilter(acceptedModules, columnIdx, datatype=String) {
     return acceptedModules.includes(datatype(rowData[dataArrIdx]));
   }
   return moduleFilter;
+}
+
+function buildEmptyColumnFilter(columnIdx) {
+  let dataArrIdx = columnIdx - 1;  // sheet column indexing starts at 1
+  function nonemptyColumnFilter(rowData) {
+    let v = rowData[dataArrIdx];
+    return v && v.trim();
+  }
+  return nonemptyColumnFilter;
 }
 
 /**
