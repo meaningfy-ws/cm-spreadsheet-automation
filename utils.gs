@@ -189,9 +189,11 @@ function deleteOrHideColumns(
   deleteOrHideAuxiliaryRightSideColumns(
     sheet, lastRightColToKeepIdx, rightSideColsToHideIdxes
   );
-  deleteLeftSideColumns(
-    sheet, lastRightColToKeepIdx, leftSideColsToDeleteIdxes
-  );
+  if (leftSideColsToDeleteIdxes) {
+    deleteLeftSideColumns(
+      sheet, lastRightColToKeepIdx, leftSideColsToDeleteIdxes
+    );
+  }
 }
 
 /**

@@ -145,7 +145,7 @@ function exportCm(mappingCfgId, sdkVersions, includedPrimModules, includedAttrMo
     );
 
     // Remove excessive columns and hide auxiliary ones after processing Rules and Attribute Rules
-    deleteOrHideAuxiliaryRightSideColumnsByName(
+    deleteOrHideColumns(
       newSpreadsheet.getSheetByName(rulesTargetSheetCfg.name),
       rulesTargetSheetCfg
     );
@@ -228,12 +228,13 @@ function exportSheet(
     copyFn(filteredData, targetSheet, options={asText: true});
   }
   
-  // Delete extra right-side columns except for the special ones required for
+  // Delete columns except for the special ones required for
   // conditional formatting. Required columns cannot be moved as it causes
   // conditional formatting rules to fail. Thus, as a a workaround the
   // unnecessary columns are removed. The special columns are hidden.
+  // Columns set for exlcusion are deleted.
   if (targetSheetCfg.deleteAuxColumns) {
-    deleteOrHideAuxiliaryRightSideColumnsByName(targetSheet, targetSheetCfg);
+    deleteOrHideColumns(targetSheet, targetSheetCfg);
   }
 
   if (DEBUG_MODE) {
@@ -258,17 +259,24 @@ function exportSheet(
 
 /**
  * A convenience function working on column names.
+ * It delegates the deletion and hiding task to the `deleteOrHideColumns`.
  */
-function deleteOrHideAuxiliaryRightSideColumnsByName(
+function deleteOrHideColumns(
   targetSheet, targetSheetCfg
 ) {
   const lastColIdx = getColumnIdxByHeaderName(
     targetSheet, targetSheetCfg.lastColName
   );
   
-  const leftsideColToExclIds = targetSheetCfg.leftsideColsToExclude.map(
-    (name) => getColumnIdxByHeaderName(targetSheet, name)
-  );
+  let leftsideColToExclIds;
+  if (targetSheetCfg.hasOwnProperty("leftsideColsToExclude")) {
+    leftsideColToExclIds = targetSheetCfg.leftsideColsToExclude.map(
+      (name) => getColumnIdxByHeaderName(targetSheet, name)
+    );
+  } else {
+    leftsideColToExclIds = [];
+  } 
+  
 
   const rightsideColsToKeepIdx = targetSheetCfg.rightsideColsToKeep.map(
     (name) => getColumnIdxByHeaderName(targetSheet, name, start=lastColIdx)
