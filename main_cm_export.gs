@@ -2,8 +2,8 @@
  * Entry point for CM export automation.
  */
 
-// if endabled then intermediate 'Rules-All' and 'Mapping Groups-All' 
-// sheets will be preserved in the generated spreadsheet
+// if enabled then auxiliary 'Rules-All', 'Attribute Rules-All' and 'Mapping
+// Groups-All' sheets will be preserved in the generated spreadsheet
 const DEBUG_MODE = false;
 
 
@@ -30,8 +30,20 @@ function exportCmDialog() {
 };
 
 function initExportCm(exportCfg) {
-  Logger.log("Starting new CM export task ...");
-  // Logger.log(`Read config: ${exportCfg}`);
+  Logger.log("INFO: Starting new CM export task ...");
+  Logger.log(`DEBUG: Read config: ${JSON.stringify(exportCfg)}`);
+  if (
+    isEmptyArray(exportCfg["sdkVersions"])
+    || (
+      isEmptyArray(exportCfg["includedPrimModules"])
+      && isEmptyArray(exportCfg["includedAttrModules"])
+      )
+  ) {
+    throw Error("Invalid configuration. SDK or/and modules were not provided.");
+  }
+  if (!exportCfg.hasOwnProperty("mappingCfgId")) {
+    throw Error("Invalid configuration. Metadata configuration was not provided.");
+  }
   var res = exportCm(
     exportCfg["mappingCfgId"],
     exportCfg["sdkVersions"],

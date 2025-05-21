@@ -18,11 +18,18 @@ function getColumnIdxByHeaderName(spreadsheet, sheetName, colName) {
  * 
  * Uses header value stored in the first row.
 */
-function getColumnIdxByHeaderName(sheet, colName) {
-  const headers = sheet.getRange("A1:1").getValues()[0];
-  const colNum = headers.indexOf(colName) + 1;
-  if (colNum < 0) throw `Cannot find column '${colName}' !`;
-  return colNum
+function getColumnIdxByHeaderName(sheet, colName, start=0, asText=true) {
+  let headers = sheet.getRange("A1:1").getValues()[0];
+  let colName_ = colName;
+  if (asText) {
+    headers = headers.map(x => String(x));
+    colName_ = String(colName);
+  }
+  const colNum = headers.indexOf(colName_, fromIndex=start);
+  if (colNum < 0) {
+    throw `Cannot find column '${colName_}' in sheet '${sheet.getName()}' (asText=${asText})!`;
+  }
+  return colNum + 1;
 }
 
 /**
@@ -91,6 +98,63 @@ function generateTimestampFromCurrentDate() {
 
 function appendTimestamp(name) {
   return name + "-" + generateTimestampFromCurrentDate();
+}
+
+/**
+ * Delete or hide particular columns based on the given specification.
+ * 
+ * The specification contains three kinds of information affecting
+ * the column range on the target sheet:
+ * A. columns to be kept visible
+ * B. columns to be hidden
+ * C. columns to be deleted
+ * 
+ * The columns to be kept (A) are specified in the following way: 
+ * a single range of columns ranging from the A to `lastRightColToKeepIdx`
+ * column except for ones specified in `leftSideColsToDeleteIdxes`. 
+ *
+ * The columns to be hidden (B) are specified in the following way: 
+ * columns in `lastRightColToKeepIdx` to the last column range that are specified
+ *     in `rightSideColsToHideIdxes`
+ * 
+ * The columns to be deleted (C) are specified in the following way:
+ * C1. a range from `lastRightColToKeepIdx` to the last column, excluding
+ *     columns specified by `rightSideColsToHideIdxes`
+ * C2. columns in A to `lastRightColToKeepIdx` column range that are specified
+ *     in `leftSideColsToDeleteIdxes`
+ */
+function deleteOrHideColumns(
+  sheet,
+  lastRightColToKeepIdx,
+  rightSideColsToHideIdxes = [], 
+  leftSideColsToDeleteIdxes = []
+) {
+  deleteOrHideAuxiliaryRightSideColumns(
+    sheet, lastRightColToKeepIdx, rightSideColsToHideIdxes
+  );
+  if (leftSideColsToDeleteIdxes) {
+    deleteLeftSideColumns(
+      sheet, lastRightColToKeepIdx, leftSideColsToDeleteIdxes
+    );
+  }
+}
+
+/**
+* Deletes columns on the right-side scope.
+*/
+function deleteLeftSideColumns(
+  sheet, lastRightColToKeepIdx, leftSideColsToDeleteIdxes
+) {
+  const rightCol = lastRightColToKeepIdx;
+  var colsToDelete = Array.from(leftSideColsToDeleteIdxes).sort().reverse();
+  for (let i = 0; i < colsToDelete.length; i++) {
+    assert(
+      colsToDelete[i] < rightCol, 
+      `Deletion of column ${colsToDelete[i]} is not supported by this function.`
+    );
+    Logger.log(`DEBUG: Deleting column ${colsToDelete[i]}`);
+    sheet.deleteColumn(colsToDelete[i]);
+  }
 }
 
 /**

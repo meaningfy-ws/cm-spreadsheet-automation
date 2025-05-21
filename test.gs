@@ -131,3 +131,110 @@ function testRemovePrereqNodeRowsForNode(dataIndex) {
   Logger.log("INFO: test `testRemovePrereqNodeRowsForNode` (rule 3) passed.")
 }
 
+/**
+ * Starting debugging session for extensions launched via UI is not possible.
+ * Thus, this function provides an exemplary input configuration for 
+ * the main CM export function. The config sets reflects configuration
+ * that could be set via the UI.
+ */
+function cmExportManualTest() {
+  let exportCfg1 = {
+    "mappingCfgId": "10-24_vX.Y (Module 1-4)",
+    // "excludedModules": [],
+    "includedPrimModules": ["1", "1.6", "2", "3", "3.6", "4", "4.6", "5", "6", "7", "8", "5p", "6p", "7p"],
+    "includedAttrModules": ["1a", "2a"],
+    "sdkVersions": ["1.10"]
+  };
+  let exportCfg2 = {
+    "mappingCfgId": "1-40+CEI+T01-T02+E1-E6_vX.Y (Module 7+8)",
+    // "excludedModules": [],
+    "includedPrimModules": ["1.7", "7", "8"],
+    "includedAttrModules": ["7a", "8a"],
+    "sdkVersions": ["1.3"]
+  };
+  let exportCfg3 = {
+    "mappingCfgId": "1-40+CEI+T01-T02+E1-E6_vX.Y (Module 7+8)",
+    // "excludedModules": [],
+    "includedPrimModules": ["8"],
+    "includedAttrModules": [],
+    "sdkVersions": ["1.3.0"]
+  };
+  let exportCfg4 = {
+    "mappingCfgId": "1-40+CEI+T01-T02+E1-E6_vX.Y (All Modules)",
+    // "excludedModules": [],
+    "includedPrimModules": [
+      "1",
+      "1.6",
+      "1.7",
+      "2",
+      "3",
+      "3.6",
+      "4",
+      "4.6",
+      "5",
+      "6",
+      "7",
+      "8"
+    ],
+    "includedAttrModules": [
+      "1.6a",
+      "1a",
+      "2a",
+      "3.6a",
+      "3a",
+      "4.6a",
+      "4a",
+      "5a",
+      "6a",
+      "7a",
+      "8a"
+    ],
+    // "sdkVersions": ["1.5", "1.13"]
+    "sdkVersions": ["1.6.0", "1.7.0"]
+  };
+  // let exportCfg = exportCfg1;
+  let exportCfg = exportCfg2;
+  let res = exportCm(
+    exportCfg["mappingCfgId"],
+    exportCfg["sdkVersions"],
+    exportCfg["includedPrimModules"],
+    exportCfg["includedAttrModules"]
+  );
+  Logger.log("Exporting finished!");
+  return res;
+}
+
+
+function testGetColumnUniqueValuesByColName() {
+  // given
+  const spreadsheet = SpreadsheetApp.getActive();
+  const rulesSheet = spreadsheet.getSheetByName(MASTER_CM_SS.SHEET.RULES_EXPORT.NAME);
+  const colName = MASTER_CM_SS.SHEET.RULES_EXPORT.COLUMN.MODULES.NAME;
+  const expected = [
+    "1",
+    "1.6",
+    "1.7",
+    "2",
+    "3",
+    "3.6",
+    "4",
+    "4.6",
+    "5",
+    "5p",
+    "6",
+    "6p",
+    "7",
+    "7p",
+    "8",
+    "9",
+  ];
+
+  // when
+  const moduleVals = getColumnUniqueValuesByColName(rulesSheet, colName);
+
+  // then
+  assert(
+    hasArraysSameElements(moduleVals, expected),
+    `expected: ${JSON.stringify(expected)}; got: ${JSON.stringify(moduleVals)}`
+  );
+}
