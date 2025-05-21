@@ -18,6 +18,9 @@ const MASTER_CM_SS = {
       COLUMN: {
         MODULES: {
           NAME: "Module"
+        },
+        STATUS: {
+          NAME: "Status"
         }
       }
     },
@@ -26,6 +29,9 @@ const MASTER_CM_SS = {
       COLUMN: {
         MODULES: {
           NAME: "Module"
+        },
+        STATUS: {
+          NAME: "Status"
         }
       }
     },
@@ -86,6 +92,10 @@ const EXPORTED_SS = {
       LAST_EXPORTED_COLUMN: {
         NAME: "Mapping Notes (public)"
       },
+      EXCLUDED_COLUMNS: [  // columns within [A:LAST_EXPORTED_COLUMN] column source range
+                           // that won't appear on the target sheet
+        MASTER_CM_SS.SHEET.RULES_EXPORT.COLUMN.STATUS.NAME
+      ],
       RIGHTSIDE_COL_NAMES_TO_KEEP: [
         "Is Node?",
         "Max SDK Version",  // 17th column, not 2nd!
@@ -102,6 +112,10 @@ const EXPORTED_SS = {
       LAST_EXPORTED_COLUMN: {
         NAME: "Mapping Notes (public)"
       },
+      EXCLUDED_COLUMNS: [  // columns within [A:LAST_EXPORTED_COLUMN] column source range
+                           // that won't appear on the target sheet
+        MASTER_CM_SS.SHEET.ATTR_RULES_EXPORT.COLUMN.STATUS.NAME
+      ],
       RIGHTSIDE_COL_NAMES_TO_KEEP: []
     },
     MG: {

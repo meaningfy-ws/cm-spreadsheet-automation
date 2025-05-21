@@ -86,7 +86,8 @@ function exportCm(mappingCfgId, sdkVersions, includedPrimModules, includedAttrMo
       name: EXPORTED_SS.SHEET.RULES.NAME,
       lastColName: EXPORTED_SS.SHEET.RULES.LAST_EXPORTED_COLUMN.NAME,
       rightsideColsToKeep: EXPORTED_SS.SHEET.RULES.RIGHTSIDE_COL_NAMES_TO_KEEP,
-      deleteAuxColumns: false
+      deleteAuxColumns: false,
+      leftsideColsToExclude: EXPORTED_SS.SHEET.RULES.EXCLUDED_COLUMNS
     };
     let rulesTargetSheetCfg = targetSheetCfg;
     exportSheet(
@@ -129,7 +130,8 @@ function exportCm(mappingCfgId, sdkVersions, includedPrimModules, includedAttrMo
       name: EXPORTED_SS.SHEET.RULES.NAME,
       lastColName: EXPORTED_SS.SHEET.ATTR_RULES.LAST_EXPORTED_COLUMN.NAME,
       rightsideColsToKeep: EXPORTED_SS.SHEET.ATTR_RULES.RIGHTSIDE_COL_NAMES_TO_KEEP,
-      deleteAuxColumns: false
+      deleteAuxColumns: false,
+      leftsideColsToExclude: EXPORTED_SS.SHEET.ATTR_RULES.EXCLUDED_COLUMNS
     };
     filteringCriteria.includedModules = includedAttrModules;  // use attr rule modules
     exportSheet(
@@ -263,13 +265,17 @@ function deleteOrHideAuxiliaryRightSideColumnsByName(
   const lastColIdx = getColumnIdxByHeaderName(
     targetSheet, targetSheetCfg.lastColName
   );
+  
+  const leftsideColToExclIds = targetSheetCfg.leftsideColsToExclude.map(
+    (name) => getColumnIdxByHeaderName(targetSheet, name)
+  );
 
   const rightsideColsToKeepIdx = targetSheetCfg.rightsideColsToKeep.map(
     (name) => getColumnIdxByHeaderName(targetSheet, name, start=lastColIdx)
   );
 
-  deleteOrHideAuxiliaryRightSideColumns(
-    targetSheet, lastColIdx, rightsideColsToKeepIdx
+  deleteOrHideColumns(
+    targetSheet, lastColIdx, rightsideColsToKeepIdx, leftsideColToExclIds
   );
 }
 

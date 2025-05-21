@@ -158,6 +158,61 @@ function appendTimestamp(name) {
 }
 
 /**
+ * Delete or hide particular columns based on the given specification.
+ * 
+ * The specification contains three kinds of information affecting
+ * the column range on the target sheet:
+ * A. columns to be kept visible
+ * B. columns to be hidden
+ * C. columns to be deleted
+ * 
+ * The columns to be kept (A) are specified in the following way: 
+ * a single range of columns ranging from the A to `lastRightColToKeepIdx`
+ * column except for ones specified in `leftSideColsToDeleteIdxes`. 
+ *
+ * The columns to be hidden (B) are specified in the following way: 
+ * columns in `lastRightColToKeepIdx` to the last column range that are specified
+ *     in `rightSideColsToHideIdxes`
+ * 
+ * The columns to be deleted (C) are specified in the following way:
+ * C1. a range from `lastRightColToKeepIdx` to the last column, excluding
+ *     columns specified by `rightSideColsToHideIdxes`
+ * C2. columns in A to `lastRightColToKeepIdx` column range that are specified
+ *     in `leftSideColsToDeleteIdxes`
+ */
+function deleteOrHideColumns(
+  sheet,
+  lastRightColToKeepIdx,
+  rightSideColsToHideIdxes = [], 
+  leftSideColsToDeleteIdxes = []
+) {
+  deleteOrHideAuxiliaryRightSideColumns(
+    sheet, lastRightColToKeepIdx, rightSideColsToHideIdxes
+  );
+  deleteLeftSideColumns(
+    sheet, lastRightColToKeepIdx, leftSideColsToDeleteIdxes
+  );
+}
+
+/**
+* Deletes columns on the right-side scope.
+*/
+function deleteLeftSideColumns(
+  sheet, lastRightColToKeepIdx, leftSideColsToDeleteIdxes
+) {
+  const rightCol = lastRightColToKeepIdx;
+  var colsToDelete = Array.from(leftSideColsToDeleteIdxes).sort().reverse();
+  for (let i = 0; i < colsToDelete.length; i++) {
+    assert(
+      colsToDelete[i] < rightCol, 
+      `Deletion of column ${colsToDelete[i]} is not supported by this function.`
+    );
+    Logger.log(`DEBUG: Deleting column ${colsToDelete[i]}`);
+    sheet.deleteColumn(colsToDelete[i]);
+  }
+}
+
+/**
 * Given a scope of columns, delete or hide columns in that scope.
 *
 * The right-side scope starts from the lastRightColToKeepIdx till the end of the
