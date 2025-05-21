@@ -145,7 +145,7 @@ function exportCm(mappingCfgId, sdkVersions, includedPrimModules, includedAttrMo
     );
 
     // Remove excessive columns and hide auxiliary ones after processing Rules and Attribute Rules
-    deleteOrHideColumns(
+    deleteOrHideColumnsByName(
       newSpreadsheet.getSheetByName(rulesTargetSheetCfg.name),
       rulesTargetSheetCfg
     );
@@ -261,7 +261,7 @@ function exportSheet(
  * A convenience function working on column names.
  * It delegates the deletion and hiding task to the `deleteOrHideColumns`.
  */
-function deleteOrHideColumns(
+function deleteOrHideColumnsByName(
   targetSheet, targetSheetCfg
 ) {
   const lastColIdx = getColumnIdxByHeaderName(
