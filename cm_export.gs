@@ -234,7 +234,7 @@ function exportSheet(
   // unnecessary columns are removed. The special columns are hidden.
   // Columns set for exlcusion are deleted.
   if (targetSheetCfg.deleteAuxColumns) {
-    deleteOrHideColumns(targetSheet, targetSheetCfg);
+    deleteOrHideColumnsByName(targetSheet, targetSheetCfg);
   }
 
   if (DEBUG_MODE) {
