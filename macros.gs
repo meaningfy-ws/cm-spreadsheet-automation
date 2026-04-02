@@ -13,9 +13,9 @@ const IS_NODE_COL_ADDR = "F2:F";
 const PARENT_ID_COL_ADDR = "H2:H";  //parentId
 const PARENT_NODE_ID_COL_ADDR = "I2:I";  //parentNodeId
 const DEFAULT_MG_GEN_COL_ADDR = "L2:L";
-const NODE_XPATH_COL_ADDR = "Q2:Q";
-const CLASS_PATH_COLUMN_ADDR = "AF2:AF";  // Class path
-const PROP_PATH_COLUMN_ADDR = "AG2:AG";
+const NODE_XPATH_COL_ADDR = "P2:P";
+const CLASS_PATH_COLUMN_ADDR = "AE2:AE";  // Class path
+const PROP_PATH_COLUMN_ADDR = "AF2:AF";
 
 
 const NEW_MGS_WITH_FLDS_SHEET_NAME = "Mapping groups with fields (generated)";
